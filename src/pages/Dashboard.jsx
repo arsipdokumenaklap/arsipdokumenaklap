@@ -3,6 +3,7 @@ import Header from "../components/layout/Header";
 import { useContext } from "react";
 import { DocumentContext } from "../context/DocumentContext";
 import { useNavigate } from "react-router-dom";
+import DalamPengembangan from "../components/DalamPengembangan";
 
 import {
   LineChart,
@@ -50,6 +51,11 @@ function Dashboard() {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8"></div>
         <Header />
+
+
+      <div className="mt-6">
+        <DalamPengembangan ringkas />
+      </div>
       
 
       {/* Cards */}
@@ -59,7 +65,11 @@ function Dashboard() {
   
   </h2>
 
+
   <ResponsiveContainer width="100%" height={300}>
+
+
+
   <PieChart>
     <Pie
       data={kategoriData}
