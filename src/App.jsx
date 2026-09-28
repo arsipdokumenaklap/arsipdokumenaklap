@@ -1,5 +1,5 @@
 import {
-  BrowserRouter,
+  HashRouter,
   Routes,
   Route,
   NavLink,
@@ -262,9 +262,9 @@ function Layout() {
 
 function App() {
   return (
-    <BrowserRouter basename={import.meta.env.DEV ? "/" : "/arsipdokumenaklap"}>
+    <HashRouter>
       <Layout />
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
