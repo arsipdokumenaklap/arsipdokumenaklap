@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
@@ -7,7 +7,6 @@ import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 // taruh file logo di src/assets/logo.png lalu import seperti ini,
 // supaya alamatnya otomatis benar walau situs dipindah ke subfolder
 import logo from "../assets/logo.png";
-
 
 // posisi, ukuran, kecepatan tiap titik salju — dibuat sekali saja, bukan tiap render
 const SALJU = Array.from({ length: 22 }).map((_, i) => {
@@ -29,6 +28,20 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  const handleLupaPassword = async () => {
+    if (!email) {
+      alert("Isi kolom Email dulu, lalu klik \"Lupa password?\" lagi.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert("Link reset password sudah dikirim ke " + email + ". Silakan cek email (termasuk folder spam).");
+    } catch (error) {
+      alert("Gagal mengirim email reset: " + error.message);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -89,6 +102,7 @@ function LoginPage() {
         <div className="absolute w-96 h-96 bg-blue-600 rounded-full blur-[150px] opacity-20" />
         <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-amber-400 rounded-full blur-[130px] opacity-10" />
 
+        
 
         {/* titik-titik salju melayang turun */}
         <div className="absolute inset-0">
@@ -190,6 +204,16 @@ function LoginPage() {
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
+            </div>
+
+            <div className="text-right mb-4">
+              <button
+                type="button"
+                onClick={handleLupaPassword}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Lupa password?
+              </button>
             </div>
 
             <button

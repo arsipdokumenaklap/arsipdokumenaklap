@@ -11,17 +11,15 @@ import {
   FaHome,
   FaUpload,
   FaFolderOpen,
-  FaSearch,
   FaChartBar,
   FaBars,
 } from "react-icons/fa";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import Dashboard from "./pages/Dashboard";
 import UploadPage from "./pages/UploadPage";
 import ArsipPage from "./pages/ArsipPage";
-import SearchPage from "./pages/SearchPage";
 import LaporanPage from "./pages/LaporanPage";
 import ViewDocumentPage from "./pages/ViewDocumentPage";
 import LoginPage from "./pages/LoginPage";
@@ -29,7 +27,10 @@ import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import { db } from "./firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
+import { auth } from "./firebase";
+
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
 function Layout() {
   const [open, setOpen] = useState(false);
@@ -38,34 +39,83 @@ function Layout() {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const profileRef = useRef(null);
 
   useEffect(() => {
-    const getUser = async () => {
-      try {
-        const docRef = doc(db, "users", "admin");
-        const docSnap = await getDoc(docRef);
+    let lepasListenerProfil = () => {};
 
-        if (docSnap.exists()) {
-          setUserData(docSnap.data());
+    const lepasAuth = onAuthStateChanged(auth, (currentUser) => {
+      // hentikan listener profil akun sebelumnya (kalau ada) setiap kali status login berubah
+      lepasListenerProfil();
+
+      if (!currentUser) {
+        setUserData(null);
+        return;
+      }
+
+      const docRef = doc(db, "users", currentUser.uid);
+
+      // onSnapshot = mendengarkan perubahan data secara langsung,
+      // jadi begitu profil disimpan di halaman Profil, sidebar ikut
+      // berubah otomatis tanpa perlu refresh halaman
+      lepasListenerProfil = onSnapshot(
+        docRef,
+        (docSnap) => {
+          if (docSnap.exists()) {
+            setUserData(docSnap.data());
+          } else {
+            // belum pernah mengisi profil, tampilkan email saja sebagai cadangan
+            setUserData({ nama: currentUser.email, nip: "" });
+          }
+        },
+        (error) => {
+          console.log(error);
+          setUserData({ nama: currentUser.email, nip: "" });
         }
-      } catch (error) {
-        console.log(error);
+      );
+    });
+
+    return () => {
+      lepasListenerProfil();
+      lepasAuth();
+    };
+  }, []);
+
+  // tutup dropdown profil saat klik di luar kotaknya
+  useEffect(() => {
+    const handleClickLuar = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setShowProfile(false);
       }
     };
 
-    getUser();
+    document.addEventListener("mousedown", handleClickLuar);
+    return () => document.removeEventListener("mousedown", handleClickLuar);
   }, []);
 
-  const handleLogout = () => {
+  // tutup dropdown profil otomatis setiap pindah halaman
+  useEffect(() => {
+    setShowProfile(false);
+  }, [location.pathname]);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.log(error);
+    }
     localStorage.removeItem("isLogin");
     navigate("/");
   };
 
   const menuClass = ({ isActive }) =>
-    isActive
-      ? "bg-blue-600 p-3 rounded-lg flex items-center gap-3"
-      : "hover:bg-blue-800 p-3 rounded-lg flex items-center gap-3";
+    `p-3 rounded-lg flex items-center gap-3 transition-all duration-200 active:scale-95 ${
+      isActive
+        ? "bg-blue-600 shadow-lg"
+        : "hover:bg-blue-800 hover:translate-x-1"
+    }`;
 
+  // halaman login tampil sendiri, tanpa sidebar dan tanpa margin
   if (location.pathname === "/") {
     return (
       <Routes>
@@ -106,7 +156,7 @@ function Layout() {
         `}
       >
         <h1 className="text-2xl font-bold mb-10">
-          Arsip Dokumen
+          Arsip AKLAP
         </h1>
 
         <div className="space-y-4 flex-1">
@@ -126,11 +176,6 @@ function Layout() {
             Arsip
           </NavLink>
 
-          <NavLink to="/search" className={menuClass}>
-            <FaSearch />
-            Pencarian
-          </NavLink>
-
           <NavLink to="/laporan" className={menuClass}>
             <FaChartBar />
             Laporan
@@ -139,16 +184,19 @@ function Layout() {
         </div>
 
         {/* Profil User */}
-        <div className="mt-auto pt-6 border-t border-blue-800 relative">
+        <div ref={profileRef} className="mt-auto pt-6 border-t border-blue-800 relative">
 
           <button
             onClick={() => setShowProfile(!showProfile)}
             className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-blue-900"
           >
             <img
-              src="https://ui-avatars.com/api/?name=JS&background=2563eb&color=fff"
+              src={
+                userData?.foto ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.nama || "U")}&background=2563eb&color=fff`
+              }
               alt="User"
-              className="w-10 h-10 rounded-full"
+              className="w-10 h-10 rounded-full object-cover"
             />
 
             <div className="text-left">
@@ -162,25 +210,35 @@ function Layout() {
             </div>
           </button>
 
-          {showProfile && (
-            <div className="absolute bottom-16 left-0 w-full bg-white rounded-lg shadow-lg overflow-hidden">
+          <div
+            className={`absolute bottom-16 left-0 w-full bg-white rounded-lg shadow-lg overflow-hidden origin-bottom transition-all duration-200 ease-out ${
+              showProfile
+                ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+                : "opacity-0 scale-95 translate-y-2 pointer-events-none"
+            }`}
+          >
 
-              <button
-                onClick={() => navigate("/profile")}
-                className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-700"
-              >
-                Lengkapi Profil
-              </button>
+            <button
+              onClick={() => {
+                setShowProfile(false);
+                navigate("/profile");
+              }}
+              className="w-full text-left px-4 py-3 hover:bg-gray-100 text-gray-700"
+            >
+              Lengkapi Profil
+            </button>
 
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-3 hover:bg-gray-100 text-red-600"
-              >
-                Logout
-              </button>
+            <button
+              onClick={() => {
+                setShowProfile(false);
+                handleLogout();
+              }}
+              className="w-full text-left px-4 py-3 hover:bg-gray-100 text-red-600"
+            >
+              Logout
+            </button>
 
-            </div>
-          )}
+          </div>
 
         </div>
       </div>
@@ -188,72 +246,68 @@ function Layout() {
       {/* Content */}
       <main className="flex-1 md:ml-64 h-screen overflow-y-auto p-4 md:p-8 mt-16 md:mt-0">
 
-        <Routes>
+        {/* key berubah setiap pindah halaman, jadi animasi masuk jalan lagi */}
+        <div key={location.pathname} className="halaman-masuk">
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+          <Routes>
 
-          <Route
-            path="/upload"
-            element={
-              <ProtectedRoute>
-                <UploadPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/arsip"
-            element={
-              <ProtectedRoute>
-                <ArsipPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/upload"
+              element={
+                <ProtectedRoute>
+                  <UploadPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/search"
-            element={
-              <ProtectedRoute>
-                <SearchPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/arsip"
+              element={
+                <ProtectedRoute>
+                  <ArsipPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/laporan"
-            element={
-              <ProtectedRoute>
-                <LaporanPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/laporan"
+              element={
+                <ProtectedRoute>
+                  <LaporanPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/view/:id"
-            element={
-              <ProtectedRoute>
-                <ViewDocumentPage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/view/:id"
+              element={
+                <ProtectedRoute>
+                  <ViewDocumentPage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
 
-        </Routes>
+          </Routes>
+
+        </div>
 
       </main>
     </div>

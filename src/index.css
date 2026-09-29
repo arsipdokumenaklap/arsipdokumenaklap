@@ -1,1 +1,46 @@
 @import "tailwindcss";
+
+/* Judul masuk dari samping kiri */
+@keyframes slide-kiri {
+  from { opacity: 0; transform: translateX(-48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Kartu muncul naik pelan-pelan */
+@keyframes naik {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Garis biru di bawah judul memanjang */
+@keyframes garis {
+  from { width: 0; opacity: 0; }
+  to   { width: 5rem; opacity: 1; }
+}
+
+.anim-slide-kiri {
+  animation: slide-kiri 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-naik {
+  animation: naik 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-garis {
+  animation: garis 0.7s ease-out both;
+}
+
+/* Setiap pindah menu, isi halaman muncul halus */
+.halaman-masuk {
+  animation: naik 0.4s ease-out both;
+}
+
+/* Hormati pengguna yang mematikan animasi di perangkatnya */
+@media (prefers-reduced-motion: reduce) {
+  .anim-slide-kiri,
+  .anim-naik,
+  .anim-garis,
+  .halaman-masuk {
+    animation: none;
+  }
+}
