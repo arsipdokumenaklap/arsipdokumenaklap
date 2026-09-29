@@ -1,13 +1,16 @@
 import Header from "../components/layout/Header";
-import { FaCloudUploadAlt, FaFilePdf } from "react-icons/fa";
+import { FaCloudUploadAlt, FaFilePdf, FaFileAlt, FaChevronDown } from "react-icons/fa";
 import { useState, useContext } from "react";
 import { DocumentContext } from "../context/DocumentContext";
+
+const JENIS_SURAT = ["Surat Masuk", "Surat Keluar", "Nota Dinas"];
 
 function UploadPage() {
 const { documents, addDocument } = useContext(DocumentContext);
 const [fileName, setFileName] = useState("");
 const [selectedFile, setSelectedFile] = useState(null);
 const [isUploaded, setIsUploaded] = useState(false);
+const [jenisSurat, setJenisSurat] = useState("");
 
 
 const handleFileChange = (e) => {
@@ -22,6 +25,11 @@ const handleFileChange = (e) => {
 
 
 const handleUpload = () => {
+  if (!jenisSurat) {
+    alert("Pilih jenis surat terlebih dahulu");
+    return;
+  }
+
   if (!selectedFile) {
     alert("Pilih file terlebih dahulu");
     return;
@@ -32,7 +40,7 @@ const handleUpload = () => {
  addDocument({
   id: Date.now(),
   nama: selectedFile.name,
-  kategori: "PDF",
+  kategori: jenisSurat,
   tanggal: new Date().toLocaleDateString(),
   fileUrl: URL.createObjectURL(selectedFile),
 });
@@ -41,6 +49,7 @@ const handleUpload = () => {
 
   setSelectedFile(null);
   setFileName("");
+  setJenisSurat("");
   setIsUploaded(true);
 };
 
@@ -64,6 +73,35 @@ const handleUpload = () => {
 
         {/* Upload Area */}
         <div className="col-span-2 bg-white rounded-2xl shadow p-8">
+
+          {/* Pilihan Jenis Surat */}
+          <div className="max-w-md mx-auto mb-6 text-left">
+            <label className="block text-sm mb-2 font-medium">
+              Jenis Surat
+            </label>
+
+            <div className="relative flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-lg px-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition">
+              <FaFileAlt className="text-blue-400 shrink-0" />
+
+              <select
+                value={jenisSurat}
+                onChange={(e) => setJenisSurat(e.target.value)}
+                className="w-full bg-transparent p-3 outline-none appearance-none cursor-pointer"
+              >
+                <option value="" disabled>
+                  Pilih jenis surat
+                </option>
+
+                {JENIS_SURAT.map((jenis) => (
+                  <option key={jenis} value={jenis}>
+                    {jenis}
+                  </option>
+                ))}
+              </select>
+
+              <FaChevronDown className="text-gray-400 text-sm shrink-0 pointer-events-none" />
+            </div>
+          </div>
 
           <div className="border-2 border-dashed border-blue-400 rounded-2xl p-16 text-center">
 
@@ -112,6 +150,7 @@ const handleUpload = () => {
 {fileName && (
   <div className="mt-4 text-green-600 font-semibold">
     ✓ File dipilih: {fileName}
+    {jenisSurat && ` — ${jenisSurat}`}
   </div>
 )}
 
@@ -175,7 +214,7 @@ const handleUpload = () => {
             </p>
 
             <p className="text-sm text-gray-500">
-              {doc.tanggal}
+              {doc.kategori} • {doc.tanggal}
             </p>
           </div>
 
