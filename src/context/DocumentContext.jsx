@@ -9,6 +9,7 @@ import {
   orderBy,
   serverTimestamp,
 } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "../firebase"; // sesuaikan dengan path file firebase kamu
 
 export const DocumentContext = createContext();
@@ -18,19 +19,42 @@ export function DocumentProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, "documents"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        setDocuments(snapshot.docs.map((d) => ({ ...d.data(), id: d.id })));
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Gagal memuat dokumen:", error);
-        setLoading(false);
+    let unsubDocs = null;
+
+    const unsubAuth = onAuthStateChanged(getAuth(), (user) => {
+      // hentikan pembacaan lama (kalau ada) setiap status login berubah
+      if (unsubDocs) {
+        unsubDocs();
+        unsubDocs = null;
       }
-    );
-    return () => unsub();
+
+      // belum login: kosongkan daftar, jangan baca Firestore dulu
+      if (!user) {
+        setDocuments([]);
+        setLoading(false);
+        return;
+      }
+
+      // sudah login: mulai baca dokumen secara real-time
+      setLoading(true);
+      const q = query(collection(db, "documents"), orderBy("createdAt", "desc"));
+      unsubDocs = onSnapshot(
+        q,
+        (snapshot) => {
+          setDocuments(snapshot.docs.map((d) => ({ ...d.data(), id: d.id })));
+          setLoading(false);
+        },
+        (error) => {
+          console.error("Gagal memuat dokumen:", error);
+          setLoading(false);
+        }
+      );
+    });
+
+    return () => {
+      unsubAuth();
+      if (unsubDocs) unsubDocs();
+    };
   }, []);
 
   const addDocument = async (data) => {
