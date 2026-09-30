@@ -26,6 +26,8 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+import logo from "./assets/logo.png";
+
 import { db } from "./firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { auth } from "./firebase";
@@ -111,7 +113,7 @@ function Layout() {
   const menuClass = ({ isActive }) =>
     `p-3 rounded-lg flex items-center gap-3 transition-all duration-200 active:scale-95 ${
       isActive
-        ? "bg-blue-600 shadow-lg"
+        ? "bg-blue-600 shadow-lg" 
         : "hover:bg-blue-800 hover:translate-x-1"
     }`;
 
@@ -148,16 +150,21 @@ function Layout() {
         className={`
           fixed top-0 left-0 z-50
           w-64 h-screen
-          bg-blue-950 text-white p-5
+          bg-blue-600 text-white p-5
           flex flex-col
           transform transition-transform duration-300
           ${open ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0
         `}
       >
-        <h1 className="text-2xl font-bold mb-10">
-          Arsip AKLAP
-        </h1>
+        {/* Logo dengan latar terang samar supaya tulisan logo terlihat */}
+        <div className="mb-8 bg-white/90 rounded-2xl p-3 shadow-lg">
+          <img
+            src={logo}
+            alt="Logo AKLAP SIKD"
+            className="w-full"
+          />
+        </div>
 
         <div className="space-y-4 flex-1">
 
