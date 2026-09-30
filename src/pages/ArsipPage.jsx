@@ -37,6 +37,16 @@ function ArsipPage() {
     return () => unsub();
   }, []);
 
+  // Tutup preview dengan tombol Esc
+  useEffect(() => {
+    if (!previewFile) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setPreviewFile(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [previewFile]);
+
   const handleHapus = async (doc) => {
     if (!window.confirm(`Hapus dokumen "${doc.nama}" dari daftar arsip?`)) return;
     try {
@@ -266,11 +276,17 @@ function ArsipPage() {
       {/* Modal Preview */}
       {previewFile && (
 
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+        <div
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-2 sm:p-4"
+          onClick={() => setPreviewFile(null)}
+        >
 
-          <div className="bg-white w-full max-w-6xl h-[90vh] rounded-xl overflow-hidden shadow-lg">
+          <div
+            className="bg-white w-full max-w-6xl h-full max-h-[90dvh] rounded-xl overflow-hidden shadow-lg flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
 
-            <div className="flex justify-between items-center p-4 border-b">
+            <div className="flex justify-between items-center p-3 sm:p-4 border-b shrink-0">
 
               <h2 className="font-bold text-lg">
                 Preview Dokumen
@@ -287,8 +303,8 @@ function ArsipPage() {
 
             <iframe
               src={previewFile}
-              title="PDF Preview"
-              className="w-full h-[calc(100%-70px)]"
+              title="Preview Dokumen"
+              className="w-full flex-1 min-h-0"
             />
 
           </div>
