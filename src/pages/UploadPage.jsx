@@ -10,8 +10,19 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { DocumentContext } from "../context/DocumentContext";
+import { uploadKeDrive } from "../driveUpload";
 
-const JENIS_SURAT = ["Surat Masuk", "Surat Keluar", "Nota Dinas"];
+const JENIS_SURAT = [
+  "Surat Masuk",
+  "Surat Keluar",
+  "Nota Dinas",
+  "Surat Keputusan",
+  "SPJ Perdin",
+  "SPJ Makan-Minum",
+  "SPJ Honorarium",
+  "Surat Pengantar",
+  "Surat Cuti",
+];
 
 const JENIS_FILE = [
   { label: "PDF", accept: ".pdf", icon: FaFilePdf, warna: "text-red-500" },
@@ -23,17 +34,18 @@ const SEMUA_FORMAT = ".pdf,.doc,.docx,.xls,.xlsx";
 const MAKS_UKURAN_FILE = 20 * 1024 * 1024; // 20 MB
 
 const INFO_UPLOAD = [
-  "Format PDF, Word, Excel",
-  "Maksimal 20 MB",
-  "Nama file unik",
-  "Dokumen tersimpan otomatis",
+  "isi nama Dokumen",
+  "Pilih Jenis Surat",
+  "Pilih Format",
+  "Upload Dokumen Maksimal 20 MB",
+  
+  
 ];
 
 function ikonUntukJenisFile(tipeFile) {
   return JENIS_FILE.find((j) => j.label === tipeFile) || JENIS_FILE[0];
 }
 
-// wadah dropdown dengan ikon di kiri dan panah di kanan
 function SelectField({ icon: Icon, iconClass = "text-blue-400", children, ...props }) {
   return (
     <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-lg px-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition">
@@ -59,12 +71,12 @@ function UploadPage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploaded, setIsUploaded] = useState(false);
   const [sedangDrag, setSedangDrag] = useState(false);
+  const [sedangUpload, setSedangUpload] = useState(false);
 
   const jenisFileTerpilih = JENIS_FILE.find((j) => j.label === jenisFile);
   const IkonJenisFile = jenisFileTerpilih?.icon || FaFileAlt;
   const warnaIkonJenisFile = jenisFileTerpilih?.warna || "text-blue-400";
 
-  // kembalikan pesan error kalau file tidak sesuai, atau null kalau aman
   const cekFile = (file) => {
     if (file.size > MAKS_UKURAN_FILE) {
       return "Ukuran file maksimal 20 MB";
@@ -87,7 +99,6 @@ function UploadPage() {
     if (inputFileRef.current) inputFileRef.current.value = "";
   };
 
-  // dipakai bersama oleh tombol "Pilih File" dan drag & drop
   const prosesFile = (file) => {
     if (!file) return;
 
@@ -115,7 +126,7 @@ function UploadPage() {
     setSedangDrag(true);
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!namaSurat.trim()) return alert("Masukkan nama surat terlebih dahulu");
     if (!jenisSurat) return alert("Pilih jenis surat terlebih dahulu");
     if (!jenisFile) return alert("Pilih jenis file terlebih dahulu");
@@ -124,34 +135,41 @@ function UploadPage() {
     const pesanError = cekFile(selectedFile);
     if (pesanError) return alert(pesanError);
 
-    addDocument({
-      id: Date.now(),
-      nama: namaSurat.trim(),
-      namaFile: selectedFile.name,
-      kategori: jenisSurat,
-      tipeFile: jenisFile,
-      tanggal: new Date().toLocaleDateString(),
-      fileUrl: URL.createObjectURL(selectedFile),
-    });
+    setSedangUpload(true);
+    try {
+      const hasilDrive = await uploadKeDrive(selectedFile);
 
-    alert("Dokumen berhasil diupload");
+      await addDocument({
+        nama: namaSurat.trim(),
+        namaFile: selectedFile.name,
+        kategori: jenisSurat,
+        tipeFile: jenisFile,
+        tanggal: new Date().toLocaleDateString(),
+        driveId: hasilDrive.id,
+        fileUrl: hasilDrive.downloadUrl,
+        previewUrl: hasilDrive.previewUrl,
+      });
 
-    setNamaSurat("");
-    setJenisSurat("");
-    setJenisFile("");
-    setSelectedFile(null);
-    setIsUploaded(true);
-    kosongkanInputFile();
+      alert("Dokumen berhasil diupload ke Google Drive");
+
+      setNamaSurat("");
+      setJenisSurat("");
+      setJenisFile("");
+      setSelectedFile(null);
+      setIsUploaded(true);
+      kosongkanInputFile();
+    } catch (error) {
+      alert("Gagal upload ke Google Drive: " + error.message);
+    } finally {
+      setSedangUpload(false);
+    }
   };
 
   return (
      <div>
 
-      {/* Judul halaman: masuk dari samping */}
       <div className="mb-8">
-        <h1
-          className="anim-slide-kiri text-2xl font-extrabold tracking-tight text-blue-950"
-        >
+        <h1 className="anim-slide-kiri text-2xl font-extrabold tracking-tight text-blue-950">
           Sistem Arsip Digital
         </h1>
 
@@ -170,7 +188,6 @@ function UploadPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        {/* Form & Area Upload */}
         <div
           className="anim-naik lg:col-span-2 bg-white rounded-2xl shadow p-6 md:p-8"
           style={{ animationDelay: "150ms" }}
@@ -187,7 +204,7 @@ function UploadPage() {
                 <FaFileSignature className="text-blue-400 shrink-0" />
                 <input
                   type="text"
-                  placeholder="Contoh: Surat Undangan Rapat Koordinasi"
+                  placeholder="isi nama surat nya ya kakaks..."
                   value={namaSurat}
                   onChange={(e) => setNamaSurat(e.target.value)}
                   className="w-full bg-transparent p-3 outline-none"
@@ -248,7 +265,6 @@ function UploadPage() {
 
           </div>
 
-          {/* Area drag & drop */}
           <div
             onDragOver={handleDragOver}
             onDragLeave={() => setSedangDrag(false)}
@@ -295,14 +311,20 @@ function UploadPage() {
 
               <button
                 onClick={handleUpload}
-                disabled={isUploaded}
+                disabled={isUploaded || sedangUpload}
                 className={`px-6 py-3 rounded-xl text-white font-medium transition active:scale-95 ${
                   isUploaded
                     ? "bg-gray-400 cursor-not-allowed"
+                    : sedangUpload
+                    ? "bg-blue-400 cursor-wait"
                     : "bg-green-600 hover:bg-green-700"
                 }`}
               >
-                {isUploaded ? "Sudah Diupload" : "Upload Dokumen"}
+                {sedangUpload
+                  ? "Mengupload ke Drive..."
+                  : isUploaded
+                  ? "Sudah Diupload"
+                  : "Upload Dokumen"}
               </button>
 
             </div>
@@ -325,85 +347,80 @@ function UploadPage() {
 
         </div>
 
-        {/* Informasi */}
-        <div
-          className="anim-naik bg-white rounded-2xl shadow p-6 h-fit"
-          style={{ animationDelay: "250ms" }}
-        >
+                {/* Kolom kanan: Informasi Upload + Upload Terbaru */}
+        <div className="space-y-5">
 
-          <h2 className="font-bold text-xl mb-4 text-blue-950">
-            Informasi Upload
-          </h2>
+          <div
+            className="anim-naik bg-white rounded-2xl shadow p-6 h-fit"
+            style={{ animationDelay: "250ms" }}
+          >
+            <h2 className="font-bold text-xl mb-4 text-blue-950">
+              Informasi Upload
+            </h2>
 
-          <ul className="space-y-3 text-gray-600">
-            {INFO_UPLOAD.map((teks) => (
-              <li key={teks} className="flex items-start gap-3">
-                <FaCheckCircle className="text-green-500 mt-1 shrink-0" />
-                <span>{teks}</span>
-              </li>
-            ))}
-          </ul>
+            <ul className="space-y-3 text-gray-600">
+              {INFO_UPLOAD.map((teks) => (
+                <li key={teks} className="flex items-start gap-3">
+                  <FaCheckCircle className="text-green-500 mt-1 shrink-0" />
+                  <span>{teks}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        </div>
+          <div
+            className="anim-naik bg-white rounded-2xl shadow p-6"
+            style={{ animationDelay: "350ms" }}
+          >
+            <h2 className="text-xl font-bold mb-4 text-blue-950">
+              Upload Terbaru
+            </h2>
 
-      </div>
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
 
-      {/* Upload Terbaru */}
-      <div
-        className="anim-naik bg-white rounded-2xl shadow p-6 mt-5"
-        style={{ animationDelay: "350ms" }}
-      >
+              {documents.length === 0 && (
+                <p className="text-gray-400 text-center py-6">
+                  Belum ada dokumen yang diupload
+                </p>
+              )}
 
-        <h2 className="text-xl font-bold mb-4 text-blue-950">
-          Upload Terbaru
-        </h2>
+              {documents.slice(0, 5).map((doc) => {
+                const jenis = ikonUntukJenisFile(doc.tipeFile);
+                const Ikon = jenis.icon;
 
-        <div className="space-y-3">
+                return (
+                  <div
+                    key={doc.id}
+                    className="flex justify-between items-center gap-3 border-b last:border-b-0 pb-3 last:pb-0"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Ikon className={`${jenis.warna} shrink-0`} size={25} />
 
-          {documents.length === 0 && (
-            <p className="text-gray-400 text-center py-6">
-              Belum ada dokumen yang diupload
-            </p>
-          )}
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">
+                          {doc.nama}
+                        </p>
 
-          {documents.map((doc) => {
-            const jenis = ikonUntukJenisFile(doc.tipeFile);
-            const Ikon = jenis.icon;
+                        <p className="text-sm text-gray-500 truncate">
+                          {doc.kategori}
+                          {doc.tipeFile && ` • ${doc.tipeFile}`} • {doc.tanggal}
+                        </p>
+                      </div>
+                    </div>
 
-            return (
-              <div
-                key={doc.id}
-                className="flex justify-between items-center gap-3 border-b last:border-b-0 pb-3 last:pb-0"
-              >
-
-                <div className="flex items-center gap-3 min-w-0">
-
-                  <Ikon className={`${jenis.warna} shrink-0`} size={25} />
-
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">
-                      {doc.nama}
-                    </p>
-
-                    <p className="text-sm text-gray-500">
-                      {doc.kategori}
-                      {doc.tipeFile && ` • ${doc.tipeFile}`} • {doc.tanggal}
-                    </p>
+                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-sm shrink-0">
+                      Berhasil
+                    </span>
                   </div>
+                );
+              })}
 
-                </div>
-
-                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-sm shrink-0">
-                  Berhasil
-                </span>
-
-              </div>
-            );
-          })}
+            </div>
+          </div>
 
         </div>
 
-      </div>
+      </div>   {/* penutup grid */}
 
     </div>
   );

@@ -1,18 +1,50 @@
-
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { DocumentContext } from "../context/DocumentContext";
 import { FaFileAlt, FaChevronDown, FaSearch } from "react-icons/fa";
 
-const JENIS_SURAT = ["Semua", "Surat Masuk", "Surat Keluar", "Nota Dinas"];
+const ADMIN_UID = "By09HK5iw3dS8yBZ1OmMotw1TJC3";
+
+const JENIS_SURAT = [
+  "Semua",
+  "Surat Masuk",
+  "Surat Keluar",
+  "Nota Dinas",
+  "Surat Keputusan",
+  "SPJ Perdin",
+  "SPJ Makan-Minum",
+  "SPJ Honorarium",
+  "Surat Pengantar",
+  "Surat Cuti",
+];
+
 const JENIS_FILE = ["Semua", "PDF", "Word", "Excel"];
 
 function ArsipPage() {
 
-  const { documents } = useContext(DocumentContext);
+  const { documents, deleteDocument } = useContext(DocumentContext);
   const [keyword, setKeyword] = useState("");
   const [filterSurat, setFilterSurat] = useState("Semua");
   const [filterFile, setFilterFile] = useState("Semua");
   const [previewFile, setPreviewFile] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Cek apakah user yang login adalah admin
+  useEffect(() => {
+    const unsub = onAuthStateChanged(getAuth(), (user) => {
+      setIsAdmin(user?.uid === ADMIN_UID);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleHapus = async (doc) => {
+    if (!window.confirm(`Hapus dokumen "${doc.nama}" dari daftar arsip?`)) return;
+    try {
+      await deleteDocument(doc.id);
+    } catch (error) {
+      alert("Gagal menghapus dokumen: " + error.message);
+    }
+  };
 
   const dokumenTersaring = documents.filter((doc) => {
     const cocokNama = (doc.nama || "").toLowerCase().includes(keyword.toLowerCase());
@@ -21,21 +53,29 @@ function ArsipPage() {
     return cocokNama && cocokSurat && cocokFile;
   });
 
-  // preview lewat iframe hanya cocok untuk PDF
-  const bisaPreview = (doc) => !doc.tipeFile || doc.tipeFile === "PDF";
+  // Google Drive bisa menampilkan pratinjau PDF, Word, maupun Excel
+  const bisaPreview = (doc) => Boolean(doc.previewUrl || doc.fileUrl);
 
   return (
     <div>
 
-     
+      <div className="mb-8">
+        <h1 className="anim-slide-kiri text-2xl font-extrabold tracking-tight text-blue-950">
+          Sistem Arsip Digital
+        </h1>
 
-      <h1 className="text-3xl font-bold mt-6">
-        Arsip Dokumen
-      </h1>
+        <p
+          className="anim-slide-kiri text-gray-500 mt-2 text-lg"
+          style={{ animationDelay: "120ms" }}
+        >
+          BIDANG AKUNTANSI PELAPORAN DAN SISTEM INFORMASI KEUANGAN DAERAH
+        </p>
 
-      <p className="text-gray-500 mb-6">
-        Daftar seluruh dokumen yang telah diupload
-      </p>
+        <div
+          className="anim-garis h-1 w-20 rounded-full bg-blue-600 mt-4"
+          style={{ animationDelay: "300ms" }}
+        />
+      </div>
 
       {/* Cari, Filter Jenis Surat & Jenis File */}
       <div className="bg-white rounded-2xl shadow p-4 mb-5 space-y-4">
@@ -178,7 +218,7 @@ function ArsipPage() {
 
                     {bisaPreview(doc) && (
                       <button
-                        onClick={() => setPreviewFile(doc.fileUrl)}
+                        onClick={() => setPreviewFile(doc.previewUrl || doc.fileUrl)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition"
                       >
                         Preview
@@ -192,6 +232,15 @@ function ArsipPage() {
                     >
                       Download
                     </a>
+
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleHapus(doc)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition"
+                      >
+                        Hapus
+                      </button>
+                    )}
 
                   </div>
                 </td>
