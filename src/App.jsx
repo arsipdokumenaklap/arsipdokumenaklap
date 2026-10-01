@@ -96,8 +96,10 @@ function Layout() {
   }, []);
 
   // tutup dropdown profil otomatis setiap pindah halaman
+  // tutup dropdown profil dan sidebar HP otomatis setiap pindah halaman
   useEffect(() => {
     setShowProfile(false);
+    setOpen(false);
   }, [location.pathname]);
 
   const handleLogout = async () => {
@@ -113,7 +115,7 @@ function Layout() {
   const menuClass = ({ isActive }) =>
     `p-3 rounded-lg flex items-center gap-3 transition-all duration-200 active:scale-95 ${
       isActive
-        ? "bg-blue-600 shadow-lg" 
+        ? "bg-blue-600 shadow-lg"
         : "hover:bg-blue-800 hover:translate-x-1"
     }`;
 
@@ -127,15 +129,22 @@ function Layout() {
   }
 
   return (
-    <div className="h-screen bg-gray-100 overflow-hidden flex">
+    <div className="h-[100dvh] bg-gray-100 overflow-hidden flex">
 
-      {/* Tombol Mobile */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="md:hidden fixed top-4 left-4 z-[60] bg-blue-950 text-white p-3 rounded-lg"
-      >
-        <FaBars />
-      </button>
+      {/* Bar atas khusus HP: tombol menu tidak lagi menimpa isi halaman */}
+      <div className="md:hidden fixed top-0 inset-x-0 h-14 z-30 bg-blue-950 text-white flex items-center gap-3 px-4 shadow-md">
+        <button
+          onClick={() => setOpen(true)}
+          className="p-2 rounded-lg hover:bg-blue-900 active:scale-95 transition"
+          aria-label="Buka menu"
+        >
+          <FaBars size={20} />
+        </button>
+
+        <span className="font-bold text-lg">
+          Arsip Dokumen
+        </span>
+      </div>
 
       {/* Overlay */}
       {open && (
@@ -149,8 +158,8 @@ function Layout() {
       <div
         className={`
           fixed top-0 left-0 z-50
-          w-64 h-screen
-          bg-blue-600 text-white p-5
+          w-64 h-[100dvh] overflow-y-auto
+          bg-blue-950 text-white p-5
           flex flex-col
           transform transition-transform duration-300
           ${open ? "translate-x-0" : "-translate-x-full"}
@@ -251,7 +260,7 @@ function Layout() {
       </div>
 
       {/* Content */}
-      <main className="flex-1 md:ml-64 h-screen overflow-y-auto p-4 md:p-8 mt-16 md:mt-0">
+      <main className="flex-1 md:ml-64 h-[100dvh] overflow-y-auto p-4 pt-20 md:p-8">
 
         {/* key berubah setiap pindah halaman, jadi animasi masuk jalan lagi */}
         <div key={location.pathname} className="halaman-masuk">
