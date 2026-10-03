@@ -10,7 +10,7 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { DocumentContext } from "../context/DocumentContext";
-import { uploadKeDrive } from "../driveUpload";
+import { UploadContext } from "../context/UploadContext";
 
 const JENIS_SURAT = [
   "Surat Masuk",
@@ -22,6 +22,7 @@ const JENIS_SURAT = [
   "SPJ Honorarium",
   "Surat Pengantar",
   "Surat Cuti",
+  "Dokumen Lainnya"
 ];
 
 const JENIS_FILE = [
@@ -38,8 +39,6 @@ const INFO_UPLOAD = [
   "Pilih Jenis Surat",
   "Pilih Format",
   "Upload Dokumen Maksimal 20 MB",
-  
-  
 ];
 
 function ikonUntukJenisFile(tipeFile) {
@@ -62,16 +61,15 @@ function SelectField({ icon: Icon, iconClass = "text-blue-400", children, ...pro
 }
 
 function UploadPage() {
-  const { documents, addDocument } = useContext(DocumentContext);
+  const { documents } = useContext(DocumentContext);
+  const { mulaiUpload } = useContext(UploadContext);
   const inputFileRef = useRef(null);
 
   const [namaSurat, setNamaSurat] = useState("");
   const [jenisSurat, setJenisSurat] = useState("");
   const [jenisFile, setJenisFile] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
-  const [isUploaded, setIsUploaded] = useState(false);
   const [sedangDrag, setSedangDrag] = useState(false);
-  const [sedangUpload, setSedangUpload] = useState(false);
 
   const jenisFileTerpilih = JENIS_FILE.find((j) => j.label === jenisFile);
   const IkonJenisFile = jenisFileTerpilih?.icon || FaFileAlt;
@@ -110,7 +108,6 @@ function UploadPage() {
     }
 
     setSelectedFile(file);
-    setIsUploaded(false);
   };
 
   const handleFileChange = (e) => prosesFile(e.target.files[0]);
@@ -126,7 +123,7 @@ function UploadPage() {
     setSedangDrag(true);
   };
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (!namaSurat.trim()) return alert("Masukkan nama surat terlebih dahulu");
     if (!jenisSurat) return alert("Pilih jenis surat terlebih dahulu");
     if (!jenisFile) return alert("Pilih jenis file terlebih dahulu");
@@ -135,34 +132,19 @@ function UploadPage() {
     const pesanError = cekFile(selectedFile);
     if (pesanError) return alert(pesanError);
 
-    setSedangUpload(true);
-    try {
-      const hasilDrive = await uploadKeDrive(selectedFile);
+    // upload berjalan di latar belakang (lihat panel di pojok kanan bawah)
+    mulaiUpload({
+      file: selectedFile,
+      nama: namaSurat.trim(),
+      kategori: jenisSurat,
+      tipeFile: jenisFile,
+    });
 
-      await addDocument({
-        nama: namaSurat.trim(),
-        namaFile: selectedFile.name,
-        kategori: jenisSurat,
-        tipeFile: jenisFile,
-        tanggal: new Date().toLocaleDateString(),
-        driveId: hasilDrive.id,
-        fileUrl: hasilDrive.downloadUrl,
-        previewUrl: hasilDrive.previewUrl,
-      });
-
-      alert("Dokumen berhasil diupload ke Google Drive");
-
-      setNamaSurat("");
-      setJenisSurat("");
-      setJenisFile("");
-      setSelectedFile(null);
-      setIsUploaded(true);
-      kosongkanInputFile();
-    } catch (error) {
-      alert("Gagal upload ke Google Drive: " + error.message);
-    } finally {
-      setSedangUpload(false);
-    }
+    setNamaSurat("");
+    setJenisSurat("");
+    setJenisFile("");
+    setSelectedFile(null);
+    kosongkanInputFile();
   };
 
   return (
@@ -311,20 +293,9 @@ function UploadPage() {
 
               <button
                 onClick={handleUpload}
-                disabled={isUploaded || sedangUpload}
-                className={`px-6 py-3 rounded-xl text-white font-medium transition active:scale-95 ${
-                  isUploaded
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : sedangUpload
-                    ? "bg-blue-400 cursor-wait"
-                    : "bg-green-600 hover:bg-green-700"
-                }`}
+                className="px-6 py-3 rounded-xl text-white font-medium transition active:scale-95 bg-green-600 hover:bg-green-700"
               >
-                {sedangUpload
-                  ? "Mengupload ke Drive..."
-                  : isUploaded
-                  ? "Sudah Diupload"
-                  : "Upload Dokumen"}
+                Upload Dokumen
               </button>
 
             </div>
@@ -347,7 +318,7 @@ function UploadPage() {
 
         </div>
 
-                {/* Kolom kanan: Informasi Upload + Upload Terbaru */}
+        {/* Kolom kanan: Informasi Upload + Upload Terbaru */}
         <div className="space-y-5">
 
           <div

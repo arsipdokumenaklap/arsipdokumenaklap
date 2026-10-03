@@ -15,7 +15,7 @@ import {
   FaBars,
 } from "react-icons/fa";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 
 import Dashboard from "./pages/Dashboard";
 import UploadPage from "./pages/UploadPage";
@@ -25,6 +25,8 @@ import ViewDocumentPage from "./pages/ViewDocumentPage";
 import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import UploadPanel from "./components/UploadPanel";
+import { UploadProvider, UploadContext } from "./context/UploadContext";
 
 import logo from "./assets/logo.png";
 
@@ -34,6 +36,9 @@ import { auth } from "./firebase";
 
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
+// berapa menit tanpa aktivitas sebelum otomatis logout
+const BATAS_DIAM_MENIT = 30;
+
 function Layout() {
   const [open, setOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -42,6 +47,11 @@ function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const profileRef = useRef(null);
+
+  // status upload di latar belakang, dipakai agar logout otomatis tidak memutus upload
+  const { adaUploadBerjalan } = useContext(UploadContext);
+  const adaUploadRef = useRef(false);
+  adaUploadRef.current = adaUploadBerjalan;
 
   useEffect(() => {
     let lepasListenerProfil = () => {};
@@ -101,6 +111,58 @@ function Layout() {
     setShowProfile(false);
     setOpen(false);
   }, [location.pathname]);
+
+  // logout otomatis kalau aplikasi ditinggalkan tanpa aktivitas
+  useEffect(() => {
+    let terakhirAktif = Date.now();
+    const catatAktivitas = () => {
+      terakhirAktif = Date.now();
+    };
+
+    const daftarEvent = ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "click"];
+    daftarEvent.forEach((e) =>
+      window.addEventListener(e, catatAktivitas, { passive: true })
+    );
+
+    const cekDiam = async () => {
+      // hanya berlaku kalau sedang login
+      if (!auth.currentUser) return;
+
+      // upload masih berjalan: jangan logout, hitung ulang waktu diam
+      if (adaUploadRef.current) {
+        terakhirAktif = Date.now();
+        return;
+      }
+
+      const lamaDiam = Date.now() - terakhirAktif;
+      if (lamaDiam >= BATAS_DIAM_MENIT * 60 * 1000) {
+        try {
+          await signOut(auth);
+        } catch (error) {
+          console.log(error);
+        }
+        localStorage.removeItem("isLogin");
+        navigate("/");
+        alert(
+          `Anda otomatis keluar karena tidak ada aktivitas selama ${BATAS_DIAM_MENIT} menit. Silakan login kembali.`
+        );
+      }
+    };
+
+    // dicek tiap 30 detik; browser kadang menahan timer di tab yang tidak aktif,
+    // jadi dicek juga saat tab dibuka kembali
+    const interval = setInterval(cekDiam, 30 * 1000);
+    const saatTabKembali = () => {
+      if (document.visibilityState === "visible") cekDiam();
+    };
+    document.addEventListener("visibilitychange", saatTabKembali);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", saatTabKembali);
+      daftarEvent.forEach((e) => window.removeEventListener(e, catatAktivitas));
+    };
+  }, [navigate]);
 
   const handleLogout = async () => {
     try {
@@ -326,6 +388,9 @@ function Layout() {
         </div>
 
       </main>
+
+      {/* Panel progres upload, tampil di semua halaman */}
+      <UploadPanel />
     </div>
   );
 }
@@ -333,7 +398,9 @@ function Layout() {
 function App() {
   return (
     <HashRouter>
-      <Layout />
+      <UploadProvider>
+        <Layout />
+      </UploadProvider>
     </HashRouter>
   );
 }

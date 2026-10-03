@@ -16,6 +16,7 @@ const JENIS_SURAT = [
   "SPJ Honorarium",
   "Surat Pengantar",
   "Surat Cuti",
+  "Dokumen Lainnya"
 ];
 
 const JENIS_FILE = ["Semua", "PDF", "Word", "Excel"];
