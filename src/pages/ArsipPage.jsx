@@ -195,6 +195,10 @@ function ArsipPage() {
                 Aksi
               </th>
 
+              <th className="text-left p-3">
+                Diupload Oleh
+              </th>
+
             </tr>
 
           </thead>
@@ -256,13 +260,20 @@ function ArsipPage() {
                   </div>
                 </td>
 
+                <td
+                  className="p-3 text-gray-700"
+                  title={doc.diuploadOlehEmail || ""}
+                >
+                  {doc.diuploadOleh || "-"}
+                </td>
+
               </tr>
 
             ))}
 
             {dokumenTersaring.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-6 text-center text-gray-400">
+                <td colSpan={6} className="p-6 text-center text-gray-400">
                   Dokumen tidak ditemukan
                 </td>
               </tr>

@@ -13,6 +13,7 @@ import {
   FaFolderOpen,
   FaChartBar,
   FaBars,
+  FaCalendarAlt,
 } from "react-icons/fa";
 
 import { useState, useEffect, useRef, useContext } from "react";
@@ -27,6 +28,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UploadPanel from "./components/UploadPanel";
 import { UploadProvider, UploadContext } from "./context/UploadContext";
+import { TahunContext } from "./context/TahunContext";
 
 import logo from "./assets/logo.png";
 
@@ -47,6 +49,9 @@ function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const profileRef = useRef(null);
+
+  // tahun anggaran yang sedang dipakai (dipilih saat login)
+  const { tahun } = useContext(TahunContext);
 
   // status upload di latar belakang, dipakai agar logout otomatis tidak memutus upload
   const { adaUploadBerjalan } = useContext(UploadContext);
@@ -105,7 +110,6 @@ function Layout() {
     return () => document.removeEventListener("mousedown", handleClickLuar);
   }, []);
 
-  // tutup dropdown profil otomatis setiap pindah halaman
   // tutup dropdown profil dan sidebar HP otomatis setiap pindah halaman
   useEffect(() => {
     setShowProfile(false);
@@ -177,8 +181,8 @@ function Layout() {
   const menuClass = ({ isActive }) =>
     `p-3 rounded-lg flex items-center gap-3 transition-all duration-200 active:scale-95 ${
       isActive
-        ? "bg-blue-600 shadow-lg"
-        : "hover:bg-blue-800 hover:translate-x-1"
+        ? "bg-white text-blue-700 font-semibold shadow-lg"
+        : "hover:bg-white/15 hover:translate-x-1"
     }`;
 
   // halaman login tampil sendiri, tanpa sidebar dan tanpa margin
@@ -194,10 +198,10 @@ function Layout() {
     <div className="h-[100dvh] bg-gray-100 overflow-hidden flex">
 
       {/* Bar atas khusus HP: tombol menu tidak lagi menimpa isi halaman */}
-      <div className="md:hidden fixed top-0 inset-x-0 h-14 z-30 bg-blue-950 text-white flex items-center gap-3 px-4 shadow-md">
+      <div className="md:hidden fixed top-0 inset-x-0 h-14 z-30 bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center gap-3 px-4 shadow-md">
         <button
           onClick={() => setOpen(true)}
-          className="p-2 rounded-lg hover:bg-blue-900 active:scale-95 transition"
+          className="p-2 rounded-lg hover:bg-white/15 active:scale-95 transition"
           aria-label="Buka menu"
         >
           <FaBars size={20} />
@@ -205,6 +209,10 @@ function Layout() {
 
         <span className="font-bold text-lg">
           Arsip Dokumen
+        </span>
+
+        <span className="ml-auto text-sm text-blue-50 font-medium">
+          TA {tahun}
         </span>
       </div>
 
@@ -221,7 +229,7 @@ function Layout() {
         className={`
           fixed top-0 left-0 z-50
           w-64 h-[100dvh] overflow-y-auto
-          bg-blue-950 text-white p-5
+          bg-gradient-to-br from-blue-500 to-blue-600 text-white p-5
           flex flex-col
           transform transition-transform duration-300
           ${open ? "translate-x-0" : "-translate-x-full"}
@@ -229,12 +237,27 @@ function Layout() {
         `}
       >
         {/* Logo dengan latar terang samar supaya tulisan logo terlihat */}
-        <div className="mb-8 bg-white/90 rounded-2xl p-3 shadow-lg">
+        <div className="mb-5 bg-white/90 rounded-2xl p-3 shadow-lg">
           <img
             src={logo}
             alt="Logo AKLAP SIKD"
             className="w-full"
           />
+        </div>
+
+        {/* Tahun anggaran sesuai pilihan saat login (hanya tampilan, tidak bisa diganti) */}
+        <div className="mb-6 flex items-center gap-3 bg-white/15 border border-white/25 rounded-lg px-3 py-2.5">
+          <FaCalendarAlt className="text-white shrink-0" />
+
+          <div className="leading-tight">
+            <p className="text-xs text-blue-100">
+              Tahun Anggaran
+            </p>
+
+            <p className="font-bold text-lg">
+              {tahun}
+            </p>
+          </div>
         </div>
 
         <div className="space-y-4 flex-1">
@@ -262,11 +285,11 @@ function Layout() {
         </div>
 
         {/* Profil User */}
-        <div ref={profileRef} className="mt-auto pt-6 border-t border-blue-800 relative">
+        <div ref={profileRef} className="mt-auto pt-6 border-t border-white/25 relative">
 
           <button
             onClick={() => setShowProfile(!showProfile)}
-            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-blue-900"
+            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/15"
           >
             <img
               src={
@@ -282,7 +305,7 @@ function Layout() {
                 {userData?.nama || "Loading..."}
               </p>
 
-              <p className="text-xs text-gray-300">
+              <p className="text-xs text-blue-100">
                 NIP. {userData?.nip || "-"}
               </p>
             </div>

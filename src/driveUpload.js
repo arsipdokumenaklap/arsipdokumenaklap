@@ -1,5 +1,6 @@
 // Mengirim file ke Google Apps Script, yang akan menyimpannya
 // ke folder Google Drive yang sudah ditentukan di sana.
+// Tahun anggaran ikut dikirim supaya file masuk ke subfolder tahunnya.
 
 const URL_DRIVE = import.meta.env.VITE_DRIVE_URL;
 const SECRET_DRIVE = import.meta.env.VITE_DRIVE_SECRET;
@@ -14,7 +15,7 @@ function fileKeBase64(file) {
 }
 
 // mengembalikan { id, viewUrl, previewUrl, downloadUrl }
-export async function uploadKeDrive(file) {
+export async function uploadKeDrive(file, tahun) {
   if (!URL_DRIVE || !SECRET_DRIVE) {
     throw new Error(
       "VITE_DRIVE_URL / VITE_DRIVE_SECRET belum diisi di file .env"
@@ -31,6 +32,7 @@ export async function uploadKeDrive(file) {
       fileName: file.name,
       mimeType: file.type,
       base64,
+      tahun: tahun ? String(tahun) : "",
     }),
   });
 

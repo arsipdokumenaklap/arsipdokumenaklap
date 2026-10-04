@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
 import {
   collection,
   addDoc,
@@ -6,18 +6,26 @@ import {
   doc as firestoreDoc,
   onSnapshot,
   query,
-  orderBy,
+  where,
   serverTimestamp,
 } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "../firebase"; // sesuaikan dengan path file firebase kamu
+import { TahunContext } from "./TahunContext";
 
 export const DocumentContext = createContext();
 
+// dokumen yang baru disimpan belum punya waktu dari server, anggap paling baru
+function waktuDokumen(d) {
+  return d.createdAt?.toMillis ? d.createdAt.toMillis() : Number.MAX_SAFE_INTEGER;
+}
+
 export function DocumentProvider({ children }) {
+  const { tahun } = useContext(TahunContext);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // dibaca ulang setiap tahun anggaran berganti
   useEffect(() => {
     let unsubDocs = null;
 
@@ -35,13 +43,23 @@ export function DocumentProvider({ children }) {
         return;
       }
 
-      // sudah login: mulai baca dokumen secara real-time
+      // sudah login: baca hanya dokumen milik tahun anggaran yang dipilih.
+      // Urutan terbaru di atas dilakukan di sini (bukan di query), supaya
+      // tidak perlu membuat index tambahan di Firebase.
       setLoading(true);
-      const q = query(collection(db, "documents"), orderBy("createdAt", "desc"));
+      const q = query(
+        collection(db, "documents"),
+        where("tahunAnggaran", "==", tahun)
+      );
+
       unsubDocs = onSnapshot(
         q,
         (snapshot) => {
-          setDocuments(snapshot.docs.map((d) => ({ ...d.data(), id: d.id })));
+          const daftar = snapshot.docs
+            .map((d) => ({ ...d.data(), id: d.id }))
+            .sort((a, b) => waktuDokumen(b) - waktuDokumen(a));
+
+          setDocuments(daftar);
           setLoading(false);
         },
         (error) => {
@@ -55,11 +73,14 @@ export function DocumentProvider({ children }) {
       unsubAuth();
       if (unsubDocs) unsubDocs();
     };
-  }, []);
+  }, [tahun]);
 
   const addDocument = async (data) => {
     await addDoc(collection(db, "documents"), {
       ...data,
+      // pakai tahun yang dikirim pemanggil (dikunci saat upload dimulai),
+      // kalau tidak ada baru pakai tahun yang sedang aktif
+      tahunAnggaran: data.tahunAnggaran ?? tahun,
       createdAt: serverTimestamp(),
     });
   };

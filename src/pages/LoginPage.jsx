@@ -1,12 +1,22 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import {
+  FaEnvelope,
+  FaLock,
+  FaEye,
+  FaEyeSlash,
+  FaCalendarAlt,
+  FaChevronDown,
+} from "react-icons/fa";
+import { TahunContext } from "../context/TahunContext";
 
 // taruh file logo di src/assets/logo.png lalu import seperti ini,
 // supaya alamatnya otomatis benar walau situs dipindah ke subfolder
 import logo from "../assets/logo.png";
+// gambar tim di dalam mobil (latar transparan), taruh di src/assets/mobil-tim.webp
+import mobilTim from "../assets/mobil-tim.webp";
 
 // posisi, ukuran, kecepatan tiap titik cahaya — dibuat sekali saja, bukan tiap render
 const SALJU = Array.from({ length: 22 }).map((_, i) => {
@@ -39,7 +49,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  const { tahun, setTahun, daftarTahun } = useContext(TahunContext);
   const navigate = useNavigate();
 
   const handleLupaPassword = async () => {
@@ -80,6 +90,57 @@ function LoginPage() {
         .lp-bentuk { animation: lp-apung 6s ease-in-out infinite; }
         .lp-bentuk.lambat { animation-duration: 9s; }
 
+        /* mobil masuk dari kanan lalu berhenti di tengah */
+        @keyframes lp-masuk {
+          from { opacity: 0; transform: translateX(70vw); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        .lp-mobil-masuk {
+          animation: lp-masuk 1.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        /* goyangan halus seperti sedang melaju di jalan */
+        @keyframes lp-melaju {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          25%      { transform: translateY(-5px) rotate(-0.5deg); }
+          50%      { transform: translateY(0) rotate(0deg); }
+          75%      { transform: translateY(-3px) rotate(0.4deg); }
+        }
+        .lp-mobil {
+          animation: lp-melaju 1.1s ease-in-out infinite;
+          transform-origin: 50% 90%;
+        }
+
+        /* garis putus-putus di bawah mobil bergerak ke kanan */
+        @keyframes lp-jalan {
+          from { background-position: -64px 0; }
+          to   { background-position: 0 0; }
+        }
+        .lp-jalan {
+          background-image: repeating-linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.75) 0 32px,
+            transparent 32px 64px
+          );
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+          animation: lp-jalan 0.6s linear infinite;
+        }
+
+        /* garis angin di belakang mobil (sisi kanan) */
+        @keyframes lp-angin {
+          0%   { opacity: 0; transform: translateX(0); }
+          30%  { opacity: 0.8; }
+          100% { opacity: 0; transform: translateX(40px); }
+        }
+        .lp-angin {
+          position: absolute;
+          height: 3px;
+          border-radius: 9999px;
+          background: #ffffff;
+          animation: lp-angin 0.9s ease-out infinite;
+        }
+
         @keyframes lp-turun {
           0%   { top: -6%; transform: translateX(0); }
           50%  { transform: translateX(12px); }
@@ -98,6 +159,8 @@ function LoginPage() {
         @media (prefers-reduced-motion: reduce) {
           .lp-salju { animation: none; opacity: 0.35; }
           .lp-bentuk { animation: none; }
+          .lp-mobil-masuk, .lp-mobil, .lp-jalan { animation: none; }
+          .lp-angin { display: none; }
         }
       `}</style>
 
@@ -134,6 +197,24 @@ function LoginPage() {
 
         {/* blok konten: logo + judul menempel rapat, ditengah secara keseluruhan */}
         <div className="flex flex-col items-center z-10 max-h-[85vh] justify-center gap-2">
+          {/* tim di dalam mobil: masuk dari kanan, lalu terus "melaju" di tempat */}
+          <div className="lp-mobil-masuk flex flex-col items-center mb-3">
+            <div className="relative">
+              {/* garis angin di sisi kanan (belakang mobil) */}
+              <span className="lp-angin -right-7 bottom-[30%] w-8" style={{ animationDelay: "0s" }} />
+              <span className="lp-angin -right-10 bottom-[20%] w-10" style={{ animationDelay: "0.3s" }} />
+              <span className="lp-angin -right-6 bottom-[10%] w-6" style={{ animationDelay: "0.6s" }} />
+
+              <img
+                src={mobilTim}
+                alt="Tim Bidang AKLAP berkendara bersama"
+                className="lp-mobil h-[22vh] min-h-[120px] w-auto object-contain drop-shadow-xl"
+              />
+            </div>
+
+            <div className="lp-jalan h-1 w-80 rounded-full mt-1" />
+          </div>
+
           <div className="bg-white rounded-3xl px-10 py-6 shadow-xl shadow-blue-900/20">
             <img
               src={logo}
@@ -190,7 +271,7 @@ function LoginPage() {
               </div>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-2">
               <label className="block text-sm mb-2 font-medium">
                 Password
               </label>
@@ -224,6 +305,30 @@ function LoginPage() {
               >
                 Lupa password?
               </button>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm mb-2 font-medium">
+                Tahun Anggaran
+              </label>
+
+              <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-lg px-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition">
+                <FaCalendarAlt className="text-blue-400 shrink-0" />
+
+                <select
+                  value={tahun}
+                  onChange={(e) => setTahun(e.target.value)}
+                  className="w-full bg-transparent p-3 outline-none appearance-none cursor-pointer"
+                >
+                  {daftarTahun.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+
+                <FaChevronDown className="text-gray-400 text-sm shrink-0 pointer-events-none" />
+              </div>
             </div>
 
             <button

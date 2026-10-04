@@ -6,6 +6,7 @@ import {
   useEffect,
 } from "react";
 import { DocumentContext } from "./DocumentContext";
+import { TahunContext } from "./TahunContext";
 import { uploadKeDrive } from "../driveUpload";
 
 export const UploadContext = createContext();
@@ -14,6 +15,7 @@ export const UploadContext = createContext();
 // walaupun pengguna pindah ke menu lain.
 export function UploadProvider({ children }) {
   const { addDocument } = useContext(DocumentContext);
+  const { tahun } = useContext(TahunContext);
   const [antrian, setAntrian] = useState([]);
 
   const ubahItem = useCallback((id, perubahan) => {
@@ -27,6 +29,11 @@ export function UploadProvider({ children }) {
       const { file, nama, kategori, tipeFile } = payload;
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
+      // tahun dikunci saat upload dimulai, supaya percobaan ulang (atau pergantian
+      // tahun lewat logout/login) tidak membuat file dan datanya beda tahun
+      const tahunAnggaran = payload.tahunAnggaran ?? tahun;
+      const payloadTersimpan = { ...payload, tahunAnggaran };
+
       setAntrian((lama) => [
         {
           id,
@@ -34,13 +41,14 @@ export function UploadProvider({ children }) {
           namaFile: file.name,
           ukuran: file.size,
           status: "mengupload",
-          payload,
+          payload: payloadTersimpan,
         },
         ...lama,
       ]);
 
       try {
-        const hasilDrive = await uploadKeDrive(file);
+        // tahun ikut dikirim agar file masuk ke subfolder tahun yang sesuai
+        const hasilDrive = await uploadKeDrive(file, tahunAnggaran);
 
         ubahItem(id, { status: "menyimpan" });
 
@@ -49,6 +57,7 @@ export function UploadProvider({ children }) {
           namaFile: file.name,
           kategori,
           tipeFile,
+          tahunAnggaran,
           tanggal: new Date().toLocaleDateString(),
           driveId: hasilDrive.id ?? null,
           fileUrl: hasilDrive.downloadUrl ?? null,
@@ -60,7 +69,7 @@ export function UploadProvider({ children }) {
         ubahItem(id, { status: "gagal", pesan: error.message });
       }
     },
-    [addDocument, ubahItem]
+    [addDocument, ubahItem, tahun]
   );
 
   const ulangi = (id) => {
