@@ -1,6 +1,7 @@
 import { useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DocumentContext } from "../context/DocumentContext";
+import { TahunContext } from "../context/TahunContext";
 import {
   AreaChart,
   Area,
@@ -94,12 +95,15 @@ function Dashboard() {
   const { documents } = useContext(DocumentContext);
   const navigate = useNavigate();
 
-  const tahun = new Date().getFullYear();
+  // tahun anggaran yang dipilih saat login (dipakai untuk judul grafik)
+  const { tahun: tahunAnggaran } = useContext(TahunContext);
+  // tahun kalender sebenarnya, untuk hitungan "bulan ini" dan "bulan lalu"
+  const tahunIni = new Date().getFullYear();
 
   const r = useMemo(() => {
     const now = new Date();
     const bulanSekarang = now.getMonth();
-    const bulanLaluTgl = new Date(tahun, bulanSekarang - 1, 1);
+    const bulanLaluTgl = new Date(tahunIni, bulanSekarang - 1, 1);
     const tujuhHariLalu = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     const perBulan = BULAN.map((b) => ({ bulan: b, dokumen: 0 }));
@@ -119,8 +123,9 @@ function Dashboard() {
       const t = ambilTanggal(doc);
       if (!t) return;
 
-      if (t.getFullYear() === tahun) perBulan[t.getMonth()].dokumen += 1;
-      if (t.getFullYear() === tahun && t.getMonth() === bulanSekarang) bulanIni += 1;
+      // dokumen sudah difilter per tahun anggaran, jadi cukup dihitung per bulan upload
+      perBulan[t.getMonth()].dokumen += 1;
+      if (t.getFullYear() === tahunIni && t.getMonth() === bulanSekarang) bulanIni += 1;
       if (t.getFullYear() === bulanLaluTgl.getFullYear() && t.getMonth() === bulanLaluTgl.getMonth()) {
         bulanLalu += 1;
       }
@@ -132,7 +137,7 @@ function Dashboard() {
       .sort((a, b) => b.value - a.value);
 
     return { perBulan, perKategori, fileMap, bulanIni, bulanLalu, mingguIni };
-  }, [documents, tahun]);
+  }, [documents, tahunIni]);
 
   const total = documents.length;
 
@@ -209,7 +214,7 @@ function Dashboard() {
       {/* Grafik */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-5">
 
-        <KartuPanel judul={`Dokumen per Bulan (${tahun})`} delay={380} className="xl:col-span-2">
+        <KartuPanel judul={`Dokumen per Bulan (TA ${tahunAnggaran})`} delay={380} className="xl:col-span-2">
           <div className="h-72">
             {total === 0 ? (
               <KosongData />
