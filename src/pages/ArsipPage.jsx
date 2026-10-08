@@ -19,7 +19,7 @@ const JENIS_SURAT = [
   "Dokumen Lainnya"
 ];
 
-const JENIS_FILE = ["Semua", "PDF", "Word", "Excel"];
+const JENIS_FILE = ["Semua", "PDF", "Word", "Excel", "PowerPoint"];
 
 function ArsipPage() {
 

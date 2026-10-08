@@ -4,6 +4,7 @@ import {
   FaFilePdf,
   FaFileWord,
   FaFileExcel,
+  FaFilePowerpoint,
   FaFileAlt,
   FaFileSignature,
   FaChevronDown,
@@ -29,9 +30,10 @@ const JENIS_FILE = [
   { label: "PDF", accept: ".pdf", icon: FaFilePdf, warna: "text-red-500" },
   { label: "Word", accept: ".doc,.docx", icon: FaFileWord, warna: "text-blue-500" },
   { label: "Excel", accept: ".xls,.xlsx", icon: FaFileExcel, warna: "text-green-600" },
+  { label: "PowerPoint", accept: ".ppt,.pptx", icon: FaFilePowerpoint, warna: "text-orange-500" },
 ];
 
-const SEMUA_FORMAT = ".pdf,.doc,.docx,.xls,.xlsx";
+const SEMUA_FORMAT = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx";
 const MAKS_UKURAN_FILE = 20 * 1024 * 1024; // 20 MB
 
 const INFO_UPLOAD = [

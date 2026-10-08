@@ -21,6 +21,7 @@ import {
   FaFilePdf,
   FaFileWord,
   FaFileExcel,
+  FaFilePowerpoint,
   FaArrowUp,
   FaArrowDown,
   FaChevronRight,
@@ -37,6 +38,7 @@ const JENIS_FILE = [
   { label: "PDF", icon: FaFilePdf, teks: "text-red-500", bar: "bg-red-500" },
   { label: "Word", icon: FaFileWord, teks: "text-blue-500", bar: "bg-blue-500" },
   { label: "Excel", icon: FaFileExcel, teks: "text-green-600", bar: "bg-green-600" },
+  { label: "PowerPoint", icon: FaFilePowerpoint, teks: "text-orange-500", bar: "bg-orange-500" },
 ];
 
 // Ambil tanggal upload: utamanya dari createdAt (Firestore), cadangan dari teks "dd/mm/yyyy"
