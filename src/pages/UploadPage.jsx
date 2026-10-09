@@ -43,6 +43,15 @@ const INFO_UPLOAD = [
   "Upload Dokumen Maksimal 20 MB",
 ];
 
+// "Nota_Dinas_01.pdf" -> "Nota Dinas 01" (buang ekstensi, garis bawah jadi spasi)
+function namaDariFile(namaFile) {
+  return namaFile
+    .replace(/\.[^.]+$/, "")
+    .replace(/_+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function ikonUntukJenisFile(tipeFile) {
   return JENIS_FILE.find((j) => j.label === tipeFile) || JENIS_FILE[0];
 }
@@ -66,6 +75,8 @@ function UploadPage() {
   const { documents } = useContext(DocumentContext);
   const { mulaiUpload } = useContext(UploadContext);
   const inputFileRef = useRef(null);
+  // true kalau nama surat sudah diketik/diedit sendiri, jadi tidak ditimpa nama file
+  const namaManualRef = useRef(false);
 
   const [namaSurat, setNamaSurat] = useState("");
   const [jenisSurat, setJenisSurat] = useState("");
@@ -110,6 +121,9 @@ function UploadPage() {
     }
 
     setSelectedFile(file);
+
+    // isi otomatis nama surat dari nama file, selama belum diedit manual
+    if (!namaManualRef.current) setNamaSurat(namaDariFile(file.name));
   };
 
   const handleFileChange = (e) => prosesFile(e.target.files[0]);
@@ -143,6 +157,7 @@ function UploadPage() {
     });
 
     setNamaSurat("");
+    namaManualRef.current = false;
     setJenisSurat("");
     setJenisFile("");
     setSelectedFile(null);
@@ -190,7 +205,11 @@ function UploadPage() {
                   type="text"
                   placeholder="isi nama surat nya ya kakaks..."
                   value={namaSurat}
-                  onChange={(e) => setNamaSurat(e.target.value)}
+                  onChange={(e) => {
+                    // kalau dikosongkan, isi otomatis aktif lagi untuk file berikutnya
+                    namaManualRef.current = e.target.value.trim() !== "";
+                    setNamaSurat(e.target.value);
+                  }}
                   className="w-full bg-transparent p-3 outline-none"
                 />
               </div>
