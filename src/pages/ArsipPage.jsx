@@ -1,4 +1,5 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { DocumentContext } from "../context/DocumentContext";
 import { FaFileAlt, FaChevronDown, FaSearch } from "react-icons/fa";
@@ -28,6 +29,9 @@ function ArsipPage() {
   const [filterSurat, setFilterSurat] = useState("Semua");
   const [filterFile, setFilterFile] = useState("Semua");
   const [previewFile, setPreviewFile] = useState(null);
+  // dipakai untuk memuat ulang iframe preview (otomatis sekali, atau lewat tombol)
+  const [muatUlangKe, setMuatUlangKe] = useState(0);
+  const sudahMuatUlangOtomatis = useRef(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Cek apakah user yang login adalah admin
@@ -37,6 +41,20 @@ function ArsipPage() {
     });
     return () => unsub();
   }, []);
+
+  // Setiap preview dibuka: reset hitungan muat ulang. Drive kadang baru siap menampilkan
+  // semua halaman setelah dibuka sekali, jadi saat load pertama selesai kita muat ulang
+  // satu kali otomatis (tanpa pengguna perlu membuka tab baru).
+  useEffect(() => {
+    sudahMuatUlangOtomatis.current = false;
+    setMuatUlangKe(0);
+  }, [previewFile]);
+
+  const handlePreviewTermuat = () => {
+    if (sudahMuatUlangOtomatis.current) return;
+    sudahMuatUlangOtomatis.current = true;
+    setTimeout(() => setMuatUlangKe((n) => n + 1), 2500);
+  };
 
   // Tutup preview dengan tombol Esc
   useEffect(() => {
@@ -233,7 +251,15 @@ function ArsipPage() {
 
                     {bisaPreview(doc) && (
                       <button
-                        onClick={() => setPreviewFile(doc.previewUrl || doc.fileUrl)}
+                        onClick={() =>
+                          setPreviewFile({
+                            url: doc.previewUrl || doc.fileUrl,
+                            // tautan penampil Drive penuh (ada tombol halaman/slide berikutnya)
+                            penuh: doc.driveId
+                              ? `https://drive.google.com/file/d/${doc.driveId}/view`
+                              : doc.fileUrl,
+                          })
+                        }
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition"
                       >
                         Preview
@@ -286,10 +312,12 @@ function ArsipPage() {
       </div>
 
       {/* Modal Preview */}
-      {previewFile && (
+      {/* createPortal: modal dipasang langsung di <body> supaya selalu menutup seluruh layar,
+          tidak terpengaruh animasi perpindahan halaman di App.jsx */}
+      {previewFile && createPortal(
 
         <div
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-2 sm:p-4"
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-[60] p-2 sm:p-4"
           onClick={() => setPreviewFile(null)}
         >
 
@@ -304,25 +332,46 @@ function ArsipPage() {
                 Preview Dokumen
               </h2>
 
-              <button
-                onClick={() => setPreviewFile(null)}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
-              >
-                Tutup
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setMuatUlangKe((n) => n + 1)}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition text-sm sm:text-base"
+                >
+                  Muat Ulang
+                </button>
+
+                <a
+                  href={previewFile.penuh}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm sm:text-base"
+                >
+                  Buka di Tab Baru
+                </a>
+
+                <button
+                  onClick={() => setPreviewFile(null)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
+                >
+                  Tutup
+                </button>
+              </div>
 
             </div>
 
             <iframe
-              src={previewFile}
+              key={muatUlangKe}
+              onLoad={handlePreviewTermuat}
+              src={previewFile.url}
               title="Preview Dokumen"
               className="w-full flex-1 min-h-0"
             />
 
           </div>
 
-        </div>
+        </div>,
 
+        document.body
       )}
 
     </div>
