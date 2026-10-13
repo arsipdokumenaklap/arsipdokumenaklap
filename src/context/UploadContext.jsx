@@ -8,8 +8,31 @@ import {
 import { DocumentContext } from "./DocumentContext";
 import { TahunContext } from "./TahunContext";
 import { uploadKeDrive } from "../driveUpload";
+import { auth, db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export const UploadContext = createContext();
+
+// Siapa yang mengupload: nama diambil dari profil (users/{uid}),
+// kalau profil belum diisi dipakai email akunnya.
+async function ambilPengunggah() {
+  const user = auth.currentUser;
+  if (!user) return { nama: "-", email: "", uid: "" };
+
+  let nama = "";
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (snap.exists()) nama = snap.data().nama || "";
+  } catch (error) {
+    console.log(error);
+  }
+
+  return {
+    nama: nama || user.email || "-",
+    email: user.email || "",
+    uid: user.uid,
+  };
+}
 
 // Upload dijalankan di sini (bukan di halaman Upload), jadi tetap berjalan
 // walaupun pengguna pindah ke menu lain.
@@ -52,12 +75,17 @@ export function UploadProvider({ children }) {
 
         ubahItem(id, { status: "menyimpan" });
 
+        const pengunggah = await ambilPengunggah();
+
         await addDocument({
           nama,
           namaFile: file.name,
           kategori,
           tipeFile,
           tahunAnggaran,
+          diuploadOleh: pengunggah.nama,
+          diuploadOlehEmail: pengunggah.email,
+          diuploadOlehUid: pengunggah.uid,
           tanggal: new Date().toLocaleDateString(),
           driveId: hasilDrive.id ?? null,
           fileUrl: hasilDrive.downloadUrl ?? null,
