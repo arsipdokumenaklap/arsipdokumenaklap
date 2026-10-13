@@ -294,7 +294,7 @@ function ArsipPage() {
                     className="p-3 text-gray-700"
                     title={doc.diuploadOlehEmail || ""}
                   >
-                    {doc.diuploadOleh || "-"}
+                    {doc.diuploadOleh || doc.diuploadOlehEmail || "-"}
                   </td>
                 )}
 
