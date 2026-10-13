@@ -322,7 +322,7 @@ function ArsipPage() {
         >
 
           <div
-            className="bg-white w-full max-w-6xl h-full max-h-[90dvh] rounded-xl overflow-hidden shadow-lg flex flex-col"
+            className="kartu-modal bg-white w-full max-w-6xl h-full max-h-[90dvh] rounded-xl overflow-hidden shadow-lg flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
 

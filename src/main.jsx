@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { TahunProvider } from "./context/TahunContext";
 import { DocumentProvider } from "./context/DocumentContext";
+import "./tema-gelap.css";
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

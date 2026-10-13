@@ -14,6 +14,8 @@ import {
   FaChartBar,
   FaBars,
   FaCalendarAlt,
+  FaMoon,
+  FaSun,
 } from "react-icons/fa";
 
 import { useState, useEffect, useRef, useContext } from "react";
@@ -45,6 +47,24 @@ function Layout() {
   const [open, setOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [userData, setUserData] = useState(null);
+
+  // mode gelap/terang: pilihan disimpan di browser, class "dark" dipasang di <html>
+  const [gelap, setGelap] = useState(() => {
+    try {
+      return localStorage.getItem("tema") === "gelap";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", gelap);
+    try {
+      localStorage.setItem("tema", gelap ? "gelap" : "terang");
+    } catch {
+      /* penyimpanan browser tidak tersedia, abaikan */
+    }
+  }, [gelap]);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -198,7 +218,7 @@ function Layout() {
     <div className="h-[100dvh] bg-gray-100 overflow-hidden flex">
 
       {/* Bar atas khusus HP: tombol menu tidak lagi menimpa isi halaman */}
-      <div className="md:hidden fixed top-0 inset-x-0 h-14 z-30 bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center gap-3 px-4 shadow-md">
+      <div className="topbar-app md:hidden fixed top-0 inset-x-0 h-14 z-30 bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center gap-3 px-4 shadow-md">
         <button
           onClick={() => setOpen(true)}
           className="p-2 rounded-lg hover:bg-white/15 active:scale-95 transition"
@@ -214,6 +234,14 @@ function Layout() {
         <span className="ml-auto text-sm text-blue-50 font-medium">
           TA {tahun}
         </span>
+
+        <button
+          onClick={() => setGelap((g) => !g)}
+          className="p-2 rounded-lg hover:bg-white/15 active:scale-95 transition"
+          aria-label={gelap ? "Ganti ke mode terang" : "Ganti ke mode gelap"}
+        >
+          {gelap ? <FaSun size={18} /> : <FaMoon size={18} />}
+        </button>
       </div>
 
       {/* Overlay */}
@@ -227,7 +255,7 @@ function Layout() {
       {/* Sidebar */}
       <div
         className={`
-          fixed top-0 left-0 z-50
+          sidebar-app fixed top-0 left-0 z-50
           w-64 h-[100dvh] overflow-y-auto
           bg-gradient-to-br from-blue-500 to-blue-600 text-white p-5
           flex flex-col
@@ -284,12 +312,23 @@ function Layout() {
 
         </div>
 
+        {/* Tombol mode gelap/terang */}
+        <button
+          onClick={() => setGelap((g) => !g)}
+          className="mt-4 mb-2 w-full flex items-center gap-3 p-3 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all duration-200"
+        >
+          {gelap ? <FaSun /> : <FaMoon />}
+          <span className="text-sm font-medium">
+            {gelap ? "Mode Terang" : "Mode Gelap"}
+          </span>
+        </button>
+
         {/* Profil User */}
         <div ref={profileRef} className="mt-auto pt-6 border-t border-white/25 relative">
 
           <button
             onClick={() => setShowProfile(!showProfile)}
-            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/15"
+            className="w-full flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-white/15"
           >
             <img
               src={
@@ -300,13 +339,14 @@ function Layout() {
               className="w-10 h-10 rounded-full object-cover"
             />
 
-            <div className="text-left">
+            <div className="text-left min-w-0">
               <p className="font-semibold text-sm">
                 {userData?.nama || "Loading..."}
               </p>
 
-              <p className="text-xs text-blue-100">
-                NIP. {userData?.nip || "-"}
+              {/* spasi di dalam NIP dibuat tidak bisa putus baris, supaya angkanya tidak turun */}
+              <p className="text-[11px] tracking-tight text-blue-100 whitespace-nowrap">
+                NIP. {(userData?.nip || "-").replace(/\s+/g, "\u00A0")}
               </p>
             </div>
           </button>

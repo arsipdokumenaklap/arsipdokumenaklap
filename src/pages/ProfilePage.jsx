@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import Header from "../components/layout/Header";
 import { auth, db } from "../firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import {
@@ -203,8 +202,25 @@ function ProfilePage() {
   if (loading) {
     return (
       <div>
-        <Header />
-        <p className="mt-6 text-gray-400">Memuat profil...</p>
+      <div className="mb-8">
+        <h1 className="anim-slide-kiri text-2xl font-extrabold tracking-tight text-blue-950">
+          Sistem Arsip Digital
+        </h1>
+
+        <p
+          className="anim-slide-kiri text-gray-500 mt-2 text-lg"
+          style={{ animationDelay: "120ms" }}
+        >
+          BIDANG AKUNTANSI PELAPORAN DAN SISTEM INFORMASI KEUANGAN DAERAH
+        </p>
+
+        <div
+          className="anim-garis h-1 w-20 rounded-full bg-blue-600 mt-4"
+          style={{ animationDelay: "300ms" }}
+        />
+      </div>
+
+        <p className="text-gray-400">Memuat profil...</p>
       </div>
     );
   }
@@ -213,16 +229,36 @@ function ProfilePage() {
 
   return (
     <div>
-      <Header />
 
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="mb-8">
+        <h1 className="anim-slide-kiri text-2xl font-extrabold tracking-tight text-blue-950">
+          Sistem Arsip Digital
+        </h1>
+
+        <p
+          className="anim-slide-kiri text-gray-500 mt-2 text-lg"
+          style={{ animationDelay: "120ms" }}
+        >
+          BIDANG AKUNTANSI PELAPORAN DAN SISTEM INFORMASI KEUANGAN DAERAH
+        </p>
+
+        <div
+          className="anim-garis h-1 w-20 rounded-full bg-blue-600 mt-4"
+          style={{ animationDelay: "300ms" }}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
 
         {/* Informasi Profil */}
-        <div className="bg-white p-6 rounded-2xl shadow">
+        <div
+          className="anim-naik bg-white p-6 md:p-8 rounded-2xl shadow"
+          style={{ animationDelay: "150ms" }}
+        >
 
-          <h1 className="text-2xl font-bold mb-1">
+          <h2 className="text-2xl font-bold text-blue-950 mb-1">
             Profil Pengguna
-          </h1>
+          </h2>
 
           <p className="text-gray-500 mb-6 text-sm">
             Data ini akan tampil di sidebar aplikasi
@@ -323,9 +359,12 @@ function ProfilePage() {
         </div>
 
         {/* Ganti Password */}
-        <div className="bg-white p-6 rounded-2xl shadow">
+        <div
+          className="anim-naik bg-white p-6 md:p-8 rounded-2xl shadow"
+          style={{ animationDelay: "250ms" }}
+        >
 
-          <h2 className="text-2xl font-bold mb-1">
+          <h2 className="text-2xl font-bold text-blue-950 mb-1">
             Ganti Password
           </h2>
 
