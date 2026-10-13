@@ -213,9 +213,12 @@ function ArsipPage() {
                 Aksi
               </th>
 
-              <th className="text-left p-3">
-                Diupload Oleh
-              </th>
+              {/* kolom ini hanya tampil untuk akun admin */}
+              {isAdmin && (
+                <th className="text-left p-3">
+                  Diupload Oleh
+                </th>
+              )}
 
             </tr>
 
@@ -286,12 +289,14 @@ function ArsipPage() {
                   </div>
                 </td>
 
-                <td
-                  className="p-3 text-gray-700"
-                  title={doc.diuploadOlehEmail || ""}
-                >
-                  {doc.diuploadOleh || "-"}
-                </td>
+                {isAdmin && (
+                  <td
+                    className="p-3 text-gray-700"
+                    title={doc.diuploadOlehEmail || ""}
+                  >
+                    {doc.diuploadOleh || "-"}
+                  </td>
+                )}
 
               </tr>
 
@@ -299,7 +304,7 @@ function ArsipPage() {
 
             {dokumenTersaring.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-gray-400">
+                <td colSpan={isAdmin ? 6 : 5} className="p-6 text-center text-gray-400">
                   Dokumen tidak ditemukan
                 </td>
               </tr>
