@@ -137,13 +137,25 @@ function ProfilePage() {
     e.preventDefault();
     if (!user) return;
 
+    // nama, NIP, dan jabatan wajib diisi (bidang boleh kosong)
+    const dataBersih = {
+      nama: form.nama.trim(),
+      nip: form.nip.trim(),
+      jabatan: form.jabatan.trim(),
+      bidang: form.bidang.trim(),
+    };
+    if (!dataBersih.nama || !dataBersih.nip || !dataBersih.jabatan) {
+      alert("Nama Lengkap, NIP, dan Jabatan wajib diisi.");
+      return;
+    }
+
     setMenyimpan(true);
     try {
       const fotoFinal = fotoBaru || fotoURL;
 
       await setDoc(
         doc(db, "users", user.uid),
-        { ...form, email: user.email, foto: fotoFinal },
+        { ...dataBersih, email: user.email, foto: fotoFinal },
         { merge: true }
       );
 
@@ -317,7 +329,7 @@ function ProfilePage() {
             <Input
               icon={FaUser}
               type="text"
-              placeholder="Nama Lengkap"
+              placeholder="Nama Lengkap *"
               value={form.nama}
               onChange={handleChange("nama")}
             />
@@ -325,7 +337,7 @@ function ProfilePage() {
             <Input
               icon={FaIdBadge}
               type="text"
-              placeholder="NIP"
+              placeholder="NIP *"
               value={form.nip}
               onChange={handleChange("nip")}
             />
@@ -333,7 +345,7 @@ function ProfilePage() {
             <Input
               icon={FaBriefcase}
               type="text"
-              placeholder="Jabatan"
+              placeholder="Jabatan *"
               value={form.jabatan}
               onChange={handleChange("jabatan")}
             />

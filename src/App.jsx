@@ -102,12 +102,13 @@ function Layout() {
             setUserData(docSnap.data());
           } else {
             // belum pernah mengisi profil, tampilkan email saja sebagai cadangan
-            setUserData({ nama: currentUser.email, nip: "" });
+            setUserData({ nama: currentUser.email, nip: "", belumAda: true });
           }
         },
         (error) => {
           console.log(error);
-          setUserData({ nama: currentUser.email, nip: "" });
+          // gagal membaca profil (misal koneksi): jangan paksa ke halaman Profil
+          setUserData({ nama: currentUser.email, nip: "", gagalBaca: true });
         }
       );
     });
@@ -117,6 +118,28 @@ function Layout() {
       lepasAuth();
     };
   }, []);
+
+  // profil dianggap lengkap kalau nama, NIP, dan jabatan sudah terisi.
+  // null = data profil belum selesai dimuat (jangan buru-buru mengalihkan)
+  const profilLengkap = !userData
+    ? null
+    : userData.gagalBaca
+    ? true
+    : !userData.belumAda &&
+      !!String(userData.nama || "").trim() &&
+      !!String(userData.nip || "").trim() &&
+      !!String(userData.jabatan || "").trim();
+
+  // profil belum lengkap: paksa ke halaman Profil sampai selesai diisi
+  useEffect(() => {
+    if (
+      profilLengkap === false &&
+      location.pathname !== "/profile" &&
+      location.pathname !== "/"
+    ) {
+      navigate("/profile", { replace: true });
+    }
+  }, [profilLengkap, location.pathname, navigate]);
 
   // tutup dropdown profil saat klik di luar kotaknya
   useEffect(() => {
@@ -200,6 +223,8 @@ function Layout() {
 
   const menuClass = ({ isActive }) =>
     `p-3 rounded-lg flex items-center gap-3 transition-all duration-200 active:scale-95 ${
+      profilLengkap === false ? "opacity-50 " : ""
+    }${
       isActive
         ? "bg-white text-blue-700 font-semibold shadow-lg"
         : "hover:bg-white/15 hover:translate-x-1"
@@ -389,6 +414,17 @@ function Layout() {
 
         {/* key berubah setiap pindah halaman, jadi animasi masuk jalan lagi */}
         <div key={location.pathname} className="halaman-masuk">
+
+          {/* Pengingat wajib lengkapi profil */}
+          {profilLengkap === false && (
+            <div className="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900">
+              <p className="font-semibold">Lengkapi profil Anda terlebih dahulu</p>
+              <p className="text-sm">
+                Isi Nama Lengkap, NIP, dan Jabatan lalu klik Simpan Profil. Menu lain
+                akan terbuka setelah profil lengkap.
+              </p>
+            </div>
+          )}
 
           <Routes>
 
