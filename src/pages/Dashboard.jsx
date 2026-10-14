@@ -1,5 +1,8 @@
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { auth, db } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc as docFirestore, onSnapshot } from "firebase/firestore";
 import { DocumentContext } from "../context/DocumentContext";
 import { TahunContext } from "../context/TahunContext";
 import {
@@ -93,9 +96,54 @@ function KosongData({ teks = "Belum ada data untuk ditampilkan" }) {
   );
 }
 
+// Sapaan sesuai jam di perangkat pengguna
+function ambilSapaan(jam) {
+  if (jam >= 4 && jam < 11) return "Selamat pagi";
+  if (jam >= 11 && jam < 15) return "Selamat siang";
+  if (jam >= 15 && jam < 18) return "Selamat sore";
+  return "Selamat malam";
+}
+
 function Dashboard() {
   const { documents } = useContext(DocumentContext);
   const navigate = useNavigate();
+
+  // nama akun yang sedang login (dari profil, cadangan: email)
+  const [namaUser, setNamaUser] = useState("");
+  // jam sekarang, diperbarui tiap menit supaya sapaan ikut berganti
+  const [jam, setJam] = useState(() => new Date().getHours());
+
+  useEffect(() => {
+    const id = setInterval(() => setJam(new Date().getHours()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    let lepasProfil = () => {};
+
+    const lepasAuth = onAuthStateChanged(auth, (user) => {
+      lepasProfil();
+      if (!user) {
+        setNamaUser("");
+        return;
+      }
+
+      setNamaUser(user.email || "");
+      lepasProfil = onSnapshot(
+        docFirestore(db, "users", user.uid),
+        (snap) => {
+          const nama = snap.exists() ? String(snap.data().nama || "").trim() : "";
+          setNamaUser(nama || user.email || "");
+        },
+        (error) => console.log(error)
+      );
+    });
+
+    return () => {
+      lepasProfil();
+      lepasAuth();
+    };
+  }, []);
 
   // tahun anggaran yang dipilih saat login (dipakai untuk judul grafik)
   const { tahun: tahunAnggaran } = useContext(TahunContext);
@@ -181,6 +229,22 @@ function Dashboard() {
           style={{ animationDelay: "300ms" }}
         />
       </div>
+
+      {/* Sapaan sesuai jam dan nama akun */}
+      {namaUser && (
+        <div
+          className="anim-naik mb-5 bg-white rounded-2xl shadow px-6 py-4 flex items-center gap-3"
+          style={{ animationDelay: "60ms" }}
+        >
+          <span className="text-3xl" aria-hidden="true">
+            {jam >= 4 && jam < 11 ? "🌅" : jam >= 11 && jam < 15 ? "☀️" : jam >= 15 && jam < 18 ? "🌇" : "🌙"}
+          </span>
+          <p className="text-lg text-gray-600 min-w-0">
+            {ambilSapaan(jam)},{" "}
+            <span className="font-bold text-blue-950 break-words">{namaUser}</span>
+          </p>
+        </div>
+      )}
 
       {/* Kartu ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
