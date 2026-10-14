@@ -16,6 +16,7 @@ import {
   FaCalendarAlt,
   FaMoon,
   FaSun,
+  FaTimes,
 } from "react-icons/fa";
 
 import { useState, useEffect, useRef, useContext } from "react";
@@ -42,6 +43,27 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 
 // berapa menit tanpa aktivitas sebelum otomatis logout
 const BATAS_DIAM_MENIT = 30;
+
+// berapa detik pop up sapaan tampil sebelum hilang sendiri
+const DURASI_SAPAAN_DETIK = 6;
+
+// kunci penanda di sessionStorage: sapaan login hanya sekali per sesi login
+const KUNCI_SAPAAN = "sapaanLogin";
+
+function ambilSapaan(jam) {
+  if (jam >= 4 && jam < 11) return { teks: "Selamat pagi", ikon: "🌅" };
+  if (jam >= 11 && jam < 15) return { teks: "Selamat siang", ikon: "☀️" };
+  if (jam >= 15 && jam < 18) return { teks: "Selamat sore", ikon: "🌇" };
+  return { teks: "Selamat malam", ikon: "🌙" };
+}
+
+function hapusPenandaSapaan() {
+  try {
+    sessionStorage.removeItem(KUNCI_SAPAAN);
+  } catch {
+    /* abaikan */
+  }
+}
 
 function Layout() {
   const [open, setOpen] = useState(false);
@@ -141,6 +163,59 @@ function Layout() {
     }
   }, [profilLengkap, location.pathname, navigate]);
 
+  // ===== Pop up sapaan =====
+  // jenis: "login" (setelah masuk) atau "profil" (setelah profil dilengkapi)
+  const [sapaan, setSapaan] = useState(null);
+  const lengkapSebelumnya = useRef(undefined);
+
+  useEffect(() => {
+    if (profilLengkap === null) {
+      // belum login / data belum dimuat: reset
+      lengkapSebelumnya.current = undefined;
+      return;
+    }
+
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+
+    if (profilLengkap === false) {
+      lengkapSebelumnya.current = false;
+      return;
+    }
+
+    let sudahDisapa = false;
+    try {
+      sudahDisapa = sessionStorage.getItem(KUNCI_SAPAAN) === uid;
+    } catch {
+      /* abaikan */
+    }
+
+    const nama = String(userData?.nama || auth.currentUser?.email || "").trim();
+
+    if (lengkapSebelumnya.current === false) {
+      // baru saja melengkapi profil
+      setSapaan({ jenis: "profil", nama });
+    } else if (!sudahDisapa) {
+      // baru login
+      setSapaan({ jenis: "login", nama });
+    }
+
+    lengkapSebelumnya.current = true;
+    try {
+      sessionStorage.setItem(KUNCI_SAPAAN, uid);
+    } catch {
+      /* abaikan */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profilLengkap]);
+
+  // pop up hilang sendiri setelah beberapa detik (hitungan mulai saat bukan di halaman login)
+  useEffect(() => {
+    if (!sapaan || location.pathname === "/") return;
+    const t = setTimeout(() => setSapaan(null), DURASI_SAPAAN_DETIK * 1000);
+    return () => clearTimeout(t);
+  }, [sapaan, location.pathname]);
+
   // tutup dropdown profil saat klik di luar kotaknya
   useEffect(() => {
     const handleClickLuar = (e) => {
@@ -189,6 +264,8 @@ function Layout() {
           console.log(error);
         }
         localStorage.removeItem("isLogin");
+        hapusPenandaSapaan();
+        setSapaan(null);
         navigate("/");
         alert(
           `Anda otomatis keluar karena tidak ada aktivitas selama ${BATAS_DIAM_MENIT} menit. Silakan login kembali.`
@@ -218,6 +295,8 @@ function Layout() {
       console.log(error);
     }
     localStorage.removeItem("isLogin");
+    hapusPenandaSapaan();
+    setSapaan(null);
     navigate("/");
   };
 
@@ -487,6 +566,70 @@ function Layout() {
         </div>
 
       </main>
+
+      {/* Pop up sapaan: hilang sendiri, bisa ditutup dengan tombol X */}
+      {sapaan && (
+        <div
+          className="fixed z-[70] top-16 md:top-6 right-4 left-4 md:left-auto md:w-96 sapaan-masuk"
+          role="status"
+        >
+          <style>{`
+            @keyframes sapaanMasuk {
+              from { opacity: 0; transform: translateY(-16px) scale(.96); }
+              to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            @keyframes sapaanBar {
+              from { width: 100%; }
+              to { width: 0%; }
+            }
+            .sapaan-masuk { animation: sapaanMasuk .35s ease-out; }
+          `}</style>
+
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-2xl ring-1 ring-white/20">
+            <div className="flex items-start gap-3 p-4 pr-10">
+              <span className="text-3xl leading-none" aria-hidden="true">
+                {sapaan.jenis === "profil" ? "✅" : ambilSapaan(new Date().getHours()).ikon}
+              </span>
+
+              <div className="min-w-0">
+                {sapaan.jenis === "profil" ? (
+                  <>
+                    <p className="font-bold">Profil berhasil dilengkapi</p>
+                    <p className="text-sm text-blue-100 break-words">
+                      Terima kasih, {sapaan.nama}. Semua menu sudah bisa digunakan.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-bold break-words">
+                      {ambilSapaan(new Date().getHours()).teks}, {sapaan.nama}
+                    </p>
+                    <p className="text-sm text-blue-100">
+                      Selamat datang di Sistem Arsip Digital · TA {tahun}
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={() => setSapaan(null)}
+              className="absolute top-2.5 right-2.5 p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 active:scale-95 transition"
+              aria-label="Tutup"
+            >
+              <FaTimes size={14} />
+            </button>
+
+            {/* garis waktu yang menyusut sampai pop up hilang */}
+            <div className="h-1 bg-white/20">
+              <div
+                className="h-full bg-white/70"
+                style={{ animation: `sapaanBar ${DURASI_SAPAAN_DETIK}s linear forwards` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Panel progres upload, tampil di semua halaman */}
       <UploadPanel />
