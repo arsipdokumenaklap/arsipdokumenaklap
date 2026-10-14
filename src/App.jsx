@@ -44,9 +44,6 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 // berapa menit tanpa aktivitas sebelum otomatis logout
 const BATAS_DIAM_MENIT = 30;
 
-// berapa detik pop up sapaan tampil sebelum hilang sendiri
-const DURASI_SAPAAN_DETIK = 6;
-
 // kunci penanda di sessionStorage: sapaan login hanya sekali per sesi login
 const KUNCI_SAPAAN = "sapaanLogin";
 
@@ -208,13 +205,6 @@ function Layout() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profilLengkap]);
-
-  // pop up hilang sendiri setelah beberapa detik (hitungan mulai saat bukan di halaman login)
-  useEffect(() => {
-    if (!sapaan || location.pathname === "/") return;
-    const t = setTimeout(() => setSapaan(null), DURASI_SAPAAN_DETIK * 1000);
-    return () => clearTimeout(t);
-  }, [sapaan, location.pathname]);
 
   // tutup dropdown profil saat klik di luar kotaknya
   useEffect(() => {
@@ -567,7 +557,7 @@ function Layout() {
 
       </main>
 
-      {/* Pop up sapaan: hilang sendiri, bisa ditutup dengan tombol X */}
+      {/* Pop up sapaan: tetap tampil sampai ditutup dengan tombol X */}
       {sapaan && (
         <div
           className="fixed z-[70] top-16 md:top-6 right-4 left-4 md:left-auto md:w-96 sapaan-masuk"
@@ -578,15 +568,11 @@ function Layout() {
               from { opacity: 0; transform: translateY(-16px) scale(.96); }
               to { opacity: 1; transform: translateY(0) scale(1); }
             }
-            @keyframes sapaanBar {
-              from { width: 100%; }
-              to { width: 0%; }
-            }
             .sapaan-masuk { animation: sapaanMasuk .35s ease-out; }
           `}</style>
 
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-2xl ring-1 ring-white/20">
-            <div className="flex items-start gap-3 p-4 pr-10">
+            <div className="flex items-start gap-3 p-4 pr-11">
               <span className="text-3xl leading-none" aria-hidden="true">
                 {sapaan.jenis === "profil" ? "✅" : ambilSapaan(new Date().getHours()).ikon}
               </span>
@@ -605,7 +591,7 @@ function Layout() {
                       {ambilSapaan(new Date().getHours()).teks}, {sapaan.nama}
                     </p>
                     <p className="text-sm text-blue-100">
-                      Selamat datang di Sistem Arsip Digital · TA {tahun}
+                      Selamat datang di Sistem Arsip Digital
                     </p>
                   </>
                 )}
@@ -619,14 +605,6 @@ function Layout() {
             >
               <FaTimes size={14} />
             </button>
-
-            {/* garis waktu yang menyusut sampai pop up hilang */}
-            <div className="h-1 bg-white/20">
-              <div
-                className="h-full bg-white/70"
-                style={{ animation: `sapaanBar ${DURASI_SAPAAN_DETIK}s linear forwards` }}
-              />
-            </div>
           </div>
         </div>
       )}
