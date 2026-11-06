@@ -32,6 +32,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import UploadPanel from "./components/UploadPanel";
 import { UploadProvider, UploadContext } from "./context/UploadContext";
 import { TahunContext } from "./context/TahunContext";
+import { TemaContext, TemaProvider } from "./context/TemaContext";
 
 import logo from "./assets/logo.png";
 
@@ -67,23 +68,8 @@ function Layout() {
   const [showProfile, setShowProfile] = useState(false);
   const [userData, setUserData] = useState(null);
 
-  // mode gelap/terang: pilihan disimpan di browser, class "dark" dipasang di <html>
-  const [gelap, setGelap] = useState(() => {
-    try {
-      return localStorage.getItem("tema") === "gelap";
-    } catch {
-      return false;
-    }
-  });
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", gelap);
-    try {
-      localStorage.setItem("tema", gelap ? "gelap" : "terang");
-    } catch {
-      /* penyimpanan browser tidak tersedia, abaikan */
-    }
-  }, [gelap]);
+  // mode gelap/terang dipakai bersama dengan halaman Login (lihat TemaContext)
+  const { gelap, toggleTema } = useContext(TemaContext);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -330,7 +316,7 @@ function Layout() {
         </span>
 
         <button
-          onClick={() => setGelap((g) => !g)}
+          onClick={toggleTema}
           className="p-2 rounded-lg hover:bg-white/15 active:scale-95 transition"
           aria-label={gelap ? "Ganti ke mode terang" : "Ganti ke mode gelap"}
         >
@@ -408,7 +394,7 @@ function Layout() {
 
         {/* Tombol mode gelap/terang */}
         <button
-          onClick={() => setGelap((g) => !g)}
+          onClick={toggleTema}
           className="mt-4 mb-2 w-full flex items-center gap-3 p-3 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all duration-200"
         >
           {gelap ? <FaSun /> : <FaMoon />}
@@ -618,9 +604,11 @@ function Layout() {
 function App() {
   return (
     <HashRouter>
-      <UploadProvider>
-        <Layout />
-      </UploadProvider>
+      <TemaProvider>
+        <UploadProvider>
+          <Layout />
+        </UploadProvider>
+      </TemaProvider>
     </HashRouter>
   );
 }
