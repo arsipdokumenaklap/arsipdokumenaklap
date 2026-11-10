@@ -1,8 +1,11 @@
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useMemo } from "react";
 import {
   collection,
   addDoc,
   deleteDoc,
+  updateDoc,
+  getDoc,
+  deleteField,
   doc as firestoreDoc,
   onSnapshot,
   query,
@@ -20,9 +23,14 @@ function waktuDokumen(d) {
   return d.createdAt?.toMillis ? d.createdAt.toMillis() : Number.MAX_SAFE_INTEGER;
 }
 
+function waktuHapus(d) {
+  return d.dihapusPada?.toMillis ? d.dihapusPada.toMillis() : Number.MAX_SAFE_INTEGER;
+}
+
 export function DocumentProvider({ children }) {
   const { tahun } = useContext(TahunContext);
-  const [documents, setDocuments] = useState([]);
+  // semua dokumen tahun ini (termasuk yang ada di Sampah)
+  const [semuaDokumen, setSemuaDokumen] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // dibaca ulang setiap tahun anggaran berganti
@@ -38,7 +46,7 @@ export function DocumentProvider({ children }) {
 
       // belum login: kosongkan daftar, jangan baca Firestore dulu
       if (!user) {
-        setDocuments([]);
+        setSemuaDokumen([]);
         setLoading(false);
         return;
       }
@@ -59,7 +67,7 @@ export function DocumentProvider({ children }) {
             .map((d) => ({ ...d.data(), id: d.id }))
             .sort((a, b) => waktuDokumen(b) - waktuDokumen(a));
 
-          setDocuments(daftar);
+          setSemuaDokumen(daftar);
           setLoading(false);
         },
         (error) => {
@@ -85,13 +93,68 @@ export function DocumentProvider({ children }) {
     });
   };
 
-  const deleteDocument = async (id) => {
+  // documents = dokumen aktif (dipakai Arsip, Dashboard, Laporan).
+  // sampah = dokumen yang sudah dihapus tapi masih bisa dipulihkan.
+  const documents = useMemo(() => semuaDokumen.filter((d) => !d.dihapus), [semuaDokumen]);
+  const sampah = useMemo(
+    () =>
+      semuaDokumen
+        .filter((d) => d.dihapus)
+        .sort((a, b) => waktuHapus(b) - waktuHapus(a)),
+    [semuaDokumen]
+  );
+
+  // Hapus = pindahkan ke Sampah (data dan file di Drive tidak dihilangkan)
+  const pindahKeSampah = async (id) => {
+    const user = getAuth().currentUser;
+    let nama = "";
+    if (user) {
+      try {
+        const snap = await getDoc(firestoreDoc(db, "users", user.uid));
+        if (snap.exists()) nama = snap.data().nama || "";
+      } catch (e) {
+        console.log(e);
+      }
+    }
+
+    await updateDoc(firestoreDoc(db, "documents", id), {
+      dihapus: true,
+      dihapusPada: serverTimestamp(),
+      dihapusOleh: nama || user?.email || "-",
+      dihapusOlehEmail: user?.email || "",
+      dihapusOlehUid: user?.uid || "",
+    });
+  };
+
+  // kembalikan dokumen dari Sampah ke Arsip
+  const pulihkan = async (id) => {
+    await updateDoc(firestoreDoc(db, "documents", id), {
+      dihapus: false,
+      dihapusPada: deleteField(),
+      dihapusOleh: deleteField(),
+      dihapusOlehEmail: deleteField(),
+      dihapusOlehUid: deleteField(),
+    });
+  };
+
+  // hapus selamanya dari daftar (tidak bisa dipulihkan)
+  const hapusPermanen = async (id) => {
     await deleteDoc(firestoreDoc(db, "documents", id));
   };
 
   return (
     <DocumentContext.Provider
-      value={{ documents, addDocument, deleteDocument, loading }}
+      value={{
+        documents,
+        sampah,
+        addDocument,
+        pindahKeSampah,
+        pulihkan,
+        hapusPermanen,
+        // nama lama dipertahankan supaya kode lain yang masih memakainya tetap jalan
+        deleteDocument: pindahKeSampah,
+        loading,
+      }}
     >
       {children}
     </DocumentContext.Provider>

@@ -213,7 +213,10 @@ function LoginPage() {
         .lp-malam {
           position: absolute;
           inset: 0;
-          background: linear-gradient(160deg, #0b1026 0%, #141b3d 50%, #1e1b4b 100%);
+          background:
+            radial-gradient(620px 420px at 18% 92%, rgba(6, 182, 212, 0.24), transparent 65%),
+            radial-gradient(720px 520px at 92% 8%, rgba(168, 85, 247, 0.26), transparent 60%),
+            linear-gradient(160deg, #04051a 0%, #0a0b2e 55%, #170a3d 100%);
           opacity: 0;
           transition: opacity 1.1s ease;
           pointer-events: none;
@@ -329,27 +332,51 @@ function LoginPage() {
 
         /* ===== Panel kanan & latar saat mode gelap ===== */
         .lp-root, .lp-kanan { transition: background-color 0.5s ease, color 0.5s ease; }
-        .dark .lp-root { background: #0b1220 !important; color-scheme: dark; }
-        .dark .lp-kanan { background: #0b1220 !important; color: #e5e7eb; }
-        .dark .lp-kanan .text-gray-500 { color: #94a3b8 !important; }
-        .dark .lp-kanan .text-gray-400 { color: #7c8aa5 !important; }
-        .dark .lp-kanan .text-blue-400 { color: #60a5fa !important; }
-        .dark .lp-kanan .text-blue-600 { color: #60a5fa !important; }
-        .dark .lp-kanan .lp-field { background: #172033 !important; border-color: #2b3a52 !important; }
-        .dark .lp-kanan .lp-field:focus-within { background: #1e2a42 !important; }
-        .dark .lp-kanan input, .dark .lp-kanan select { color: #e5e7eb; }
-        .dark .lp-kanan input::placeholder { color: #6b7a94; }
-        .dark .lp-kanan select option { background: #172033; color: #e5e7eb; }
-        .dark .lp-kanan input:-webkit-autofill {
-          -webkit-text-fill-color: #e5e7eb;
-          box-shadow: 0 0 0 1000px #172033 inset;
+        .dark .lp-root { background: #05060f !important; color-scheme: dark; }
+        .dark .lp-kanan {
+          background-color: #05060f !important;
+          background-image:
+            radial-gradient(520px 360px at 85% 0%, rgba(99, 102, 241, 0.20), transparent 65%),
+            radial-gradient(460px 360px at 10% 100%, rgba(6, 182, 212, 0.14), transparent 65%);
+          color: #e6eaff;
         }
+        .dark .lp-kanan h2 { color: #f5f7ff; text-shadow: 0 0 20px rgba(99, 102, 241, 0.65); }
+        .dark .lp-kanan .text-gray-500 { color: #909cd6 !important; }
+        .dark .lp-kanan .text-gray-400 { color: #7783bb !important; }
+        .dark .lp-kanan .text-blue-400 { color: #67e8f9 !important; }
+        .dark .lp-kanan .text-blue-600 { color: #7dd3fc !important; }
+        .dark .lp-kanan .lp-field {
+          background: #070b22 !important;
+          border-color: rgba(99, 112, 255, 0.45) !important;
+        }
+        .dark .lp-kanan .lp-field:focus-within {
+          background: #070b22 !important;
+          box-shadow: 0 0 0 2px #22d3ee, 0 0 18px rgba(34, 211, 238, 0.45) !important;
+        }
+        .dark .lp-kanan input, .dark .lp-kanan select { color: #e6eaff; }
+        .dark .lp-kanan input::placeholder { color: #66729f; }
+        .dark .lp-kanan select option { background: #0b1030; color: #e6eaff; }
+        .dark .lp-kanan input:-webkit-autofill {
+          -webkit-text-fill-color: #e6eaff;
+          box-shadow: 0 0 0 1000px #070b22 inset;
+        }
+        /* tombol Login menyala */
+        .dark .lp-kanan button[type="submit"] {
+          background-image: linear-gradient(135deg, #2563eb, #7c3aed);
+          box-shadow: 0 0 18px rgba(99, 102, 241, 0.6);
+        }
+        .dark .lp-kanan button[type="submit"]:hover:not(:disabled) {
+          filter: brightness(1.15);
+          box-shadow: 0 0 28px rgba(124, 92, 255, 0.85);
+        }
+        /* kartu logo tetap putih, diberi cahaya neon */
+        .dark .lp-logo-kartu { box-shadow: 0 0 44px rgba(99, 102, 241, 0.6); }
 
         /* tombol mode gelap/terang */
         .lp-tema-btn { background: #ffffff; color: #1e3a8a; border: 1px solid #dbeafe; }
         .lp-tema-ikon { background: #eff6ff; color: #2563eb; }
-        .dark .lp-tema-btn { background: #172033; color: #e5e7eb; border-color: #2b3a52; }
-        .dark .lp-tema-ikon { background: #243352; color: #fcd34d; }
+        .dark .lp-tema-btn { background: #0b1030; color: #e6eaff; border-color: rgba(99, 112, 255, 0.6); box-shadow: 0 0 18px rgba(79, 70, 229, 0.5); }
+        .dark .lp-tema-ikon { background: rgba(99, 102, 241, 0.25); color: #fcd34d; }
 
         @media (prefers-reduced-motion: reduce) {
           .lp-salju { animation: none; opacity: 0.35; }
@@ -465,7 +492,7 @@ function LoginPage() {
             <div className="lp-jalan h-1 w-80 rounded-full mt-1" />
           </div>
 
-          <div className="bg-white rounded-3xl px-10 py-6 shadow-xl shadow-blue-900/20">
+          <div className="lp-logo-kartu bg-white rounded-3xl px-10 py-6 shadow-xl shadow-blue-900/20">
             <img
               src={logo}
               alt="Logo"

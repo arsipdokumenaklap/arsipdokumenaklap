@@ -1,86 +1,227 @@
-/* ===== Mode gelap =====
-   Dipakai bersama class "dark" di <html> (diatur tombol di sidebar, lihat App.jsx).
-   Hanya mengubah area isi halaman (<main>) dan jendela preview; sidebar tetap biru
-   dan halaman login tidak berubah. */
+/* ===== Mode gelap bergaya neon =====
+   Dipakai bersama class "dark" di <html> (diatur lewat TemaContext, tombol di sidebar & Login).
+   Mengubah area isi halaman (<main>), jendela preview, sidebar, dan bar atas HP.
+   Warna neon: biru (#3b82f6), cyan (#22d3ee), ungu (#8b5cf6), magenta (#c026d3). */
 
-/* latar belakang utama aplikasi */
-.dark .bg-gray-100 { background-color: #0b1220; }
+/* ---------- latar belakang utama: hampir hitam dengan cahaya samar ---------- */
+.dark .bg-gray-100 {
+  background-color: #05060f;
+  background-image:
+    radial-gradient(900px 520px at 88% -8%, rgba(99, 102, 241, 0.20), transparent 62%),
+    radial-gradient(760px 520px at 8% 108%, rgba(6, 182, 212, 0.13), transparent 62%);
+  background-attachment: fixed;
+}
 
-.dark main { color: #e2e8f0; color-scheme: dark; }
+.dark main {
+  color: #dbe2ff;
+  color-scheme: dark;
+  scrollbar-color: #4f46e5 transparent;
+}
 
-/* kartu / panel */
+/* scrollbar neon (Chrome / Edge) */
+.dark ::-webkit-scrollbar { width: 10px; height: 10px; }
+.dark ::-webkit-scrollbar-track { background: transparent; }
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #4f46e5, #7c3aed);
+  border-radius: 9999px;
+  border: 2px solid #05060f;
+}
+.dark ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #6366f1, #a855f7); }
+
+/* ---------- kartu / panel ---------- */
 .dark main .bg-white,
-.dark .kartu-modal { background-color: #172033; }
+.dark .kartu-modal {
+  background-color: #0b1030;
+  background-image: linear-gradient(145deg, rgba(20, 28, 68, 0.92), rgba(8, 12, 32, 0.95));
+}
 
-.dark main .bg-gray-50 { background-color: #1e293b; }
-.dark main .bg-gray-100 { background-color: #334155; }          /* mis. batang progres */
-.dark main .bg-blue-50 { background-color: #0f1a2e; }           /* kolom input */
-.dark main .bg-blue-100 { background-color: rgba(59, 130, 246, 0.22); }
+/* kartu besar: garis tepi + cahaya neon (pakai bayangan, supaya ukuran tidak bergeser) */
+.dark main .bg-white.rounded-2xl,
+.dark main .bg-white.rounded-xl,
+.dark .kartu-modal {
+  box-shadow:
+    0 0 0 1px rgba(99, 112, 255, 0.40),
+    0 0 22px rgba(79, 70, 229, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.dark main .bg-white.rounded-2xl:hover {
+  box-shadow:
+    0 0 0 1px rgba(129, 140, 248, 0.70),
+    0 0 30px rgba(99, 102, 241, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* kartu dalam grid diberi warna neon bergantian: biru, cyan, ungu */
+.dark main .grid > .bg-white.rounded-2xl:nth-child(3n + 1) {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.55), 0 0 24px rgba(59, 130, 246, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.dark main .grid > .bg-white.rounded-2xl:nth-child(3n + 2) {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.50), 0 0 24px rgba(34, 211, 238, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.dark main .grid > .bg-white.rounded-2xl:nth-child(3n) {
+  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.55), 0 0 24px rgba(168, 85, 247, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dark main .bg-gray-50 { background-color: #10163a; }
+.dark main .bg-gray-100 { background-color: #1b2250; }           /* mis. batang progres */
+.dark main .bg-blue-50 { background-color: #070b22; }            /* kolom input */
+.dark main .bg-blue-100 { background-color: rgba(59, 130, 246, 0.20); box-shadow: 0 0 16px rgba(59, 130, 246, 0.45); }
 .dark main .bg-green-50 { background-color: rgba(34, 197, 94, 0.12); }
-.dark main .bg-green-100 { background-color: rgba(34, 197, 94, 0.2); }
-.dark main .bg-amber-100 { background-color: rgba(245, 158, 11, 0.2); }
+.dark main .bg-green-100 { background-color: rgba(34, 197, 94, 0.18); box-shadow: 0 0 16px rgba(34, 197, 94, 0.45); }
+.dark main .bg-amber-100 { background-color: rgba(245, 158, 11, 0.18); box-shadow: 0 0 16px rgba(245, 158, 11, 0.45); }
 
-/* saat kolom input difokus, jangan berubah putih */
-.dark main .focus-within\:bg-white:focus-within { background-color: #0b1220; }
+/* ikon di kartu statistik ikut menyala */
+.dark main .text-blue-600 { color: #7dd3fc; }
+.dark main .text-green-600 { color: #4ade80; }
+.dark main .text-amber-600 { color: #fbbf24; }
+
+/* ---------- kolom isian: tepi neon, saat difokus menyala cyan ---------- */
+.dark main .focus-within\:bg-white:focus-within { background-color: #070b22; }
+.dark main .border-blue-100 { border-color: rgba(99, 112, 255, 0.40); }
+.dark main .focus-within\:ring-2:focus-within {
+  box-shadow: 0 0 0 2px #22d3ee, 0 0 18px rgba(34, 211, 238, 0.45);
+}
 
 /* efek hover */
-.dark main .hover\:bg-blue-50:hover { background-color: rgba(59, 130, 246, 0.14); }
+.dark main .hover\:bg-blue-50:hover { background-color: rgba(99, 102, 241, 0.16); }
 .dark main .hover\:bg-gray-100:hover,
-.dark .kartu-modal .hover\:bg-gray-200:hover { background-color: #475569; }
+.dark .kartu-modal .hover\:bg-gray-200:hover { background-color: #232b63; }
 
 /* garis pembatas */
 .dark main *,
-.dark .kartu-modal * { border-color: #2b3a52; }
+.dark .kartu-modal * { border-color: rgba(99, 112, 255, 0.26); }
 
-/* teks */
+/* ---------- teks ---------- */
+.dark main h1,
 .dark main .text-blue-950,
 .dark main .text-gray-900,
-.dark main .text-gray-800 { color: #f1f5f9; }
+.dark main .text-gray-800 { color: #f5f7ff; }
+.dark main h1 { text-shadow: 0 0 20px rgba(99, 102, 241, 0.65); }
 .dark main .text-gray-700,
 .dark main .text-gray-600,
 .dark .kartu-modal,
-.dark .kartu-modal .text-gray-700 { color: #cbd5e1; }
-.dark main .text-gray-500 { color: #94a3b8; }
-.dark main .text-gray-400 { color: #7b8aa3; }
-.dark main .text-blue-700 { color: #93c5fd; }
-.dark main .text-blue-600 { color: #60a5fa; }
+.dark .kartu-modal .text-gray-700 { color: #cdd5ff; }
+.dark main .text-gray-500 { color: #909cd6; }
+.dark main .text-gray-400 { color: #7783bb; }
+.dark main .text-blue-700 { color: #a5b4fc; }
 .dark main .text-green-700 { color: #86efac; }
-.dark .kartu-modal .bg-gray-100 { background-color: #334155; }
+.dark main th { color: #a5b4fc; }
+.dark .kartu-modal .bg-gray-100 { background-color: #1b2250; }
+
+/* baris tabel menyala halus saat disorot */
+.dark main tbody tr { transition: background-color 0.2s ease; }
+.dark main tbody tr:hover { background-color: rgba(99, 102, 241, 0.09); }
 
 /* kolom isian */
 .dark main input,
 .dark main select,
-.dark main textarea { color: #e2e8f0; }
+.dark main textarea { color: #e6eaff; }
 .dark main input::placeholder,
-.dark main textarea::placeholder { color: #64748b; }
-.dark main option { background-color: #172033; color: #e2e8f0; }
+.dark main textarea::placeholder { color: #66729f; }
+.dark main option { background-color: #0b1030; color: #e6eaff; }
 
-/* bayangan kartu */
-.dark main .shadow { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+/* ---------- garis aksen di bawah judul: gradasi neon ---------- */
+.dark main .anim-garis {
+  background-image: linear-gradient(90deg, #22d3ee, #6366f1, #c026d3);
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.85);
+}
 
-/* grafik (recharts) */
-.dark .recharts-cartesian-grid line { stroke: #2b3a52; }
+/* ---------- tombol ---------- */
+.dark main .bg-blue-600,
+.dark .kartu-modal .bg-blue-600 {
+  background-image: linear-gradient(135deg, #2563eb, #7c3aed);
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.55);
+}
+.dark main .hover\:bg-blue-700:hover,
+.dark .kartu-modal .hover\:bg-blue-700:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 24px rgba(124, 92, 255, 0.8);
+}
+.dark main .bg-green-600,
+.dark .kartu-modal .bg-green-600 {
+  background-image: linear-gradient(135deg, #059669, #10b981);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
+}
+.dark main .hover\:bg-green-700:hover { filter: brightness(1.15); box-shadow: 0 0 22px rgba(16, 185, 129, 0.75); }
+.dark main .bg-red-500,
+.dark .kartu-modal .bg-red-500 {
+  background-image: linear-gradient(135deg, #e11d48, #f43f5e);
+  box-shadow: 0 0 14px rgba(244, 63, 94, 0.5);
+}
+.dark main .hover\:bg-red-600:hover,
+.dark .kartu-modal .hover\:bg-red-600:hover { filter: brightness(1.15); box-shadow: 0 0 22px rgba(244, 63, 94, 0.75); }
+/* garis aksen tidak ikut gaya tombol */
+.dark main .anim-garis.bg-blue-600 { background-image: linear-gradient(90deg, #22d3ee, #6366f1, #c026d3); }
 
-/* ===== Sidebar & bar atas HP ikut gelap ===== */
+/* ---------- grafik (recharts) ---------- */
+.dark .recharts-cartesian-grid line { stroke: rgba(99, 112, 255, 0.20); }
+.dark .recharts-cartesian-axis-tick-value { fill: #8b9bd6; }
+/* garis & area grafik batang waktu: cyan menyala */
+.dark .recharts-area-curve {
+  stroke: #22d3ee;
+  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.9));
+}
+.dark #gradDokumen stop { stop-color: #22d3ee; }
+.dark .recharts-dot { fill: #22d3ee; stroke: #22d3ee; filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.95)); }
+/* donat / pai: warna lebih terang dengan cahaya */
+.dark .recharts-sector {
+  filter: saturate(1.25) brightness(1.12) drop-shadow(0 0 6px rgba(129, 140, 248, 0.55));
+}
+.dark .recharts-default-tooltip {
+  background-color: #0b1030 !important;
+  border: 1px solid rgba(99, 112, 255, 0.65) !important;
+  box-shadow: 0 0 18px rgba(79, 70, 229, 0.55);
+  border-radius: 10px;
+}
+.dark .recharts-tooltip-label,
+.dark .recharts-tooltip-item { color: #e6eaff !important; }
+
+/* ===== Sidebar & bar atas HP: gelap dengan tepi neon ===== */
 .dark .sidebar-app {
-  background-image: linear-gradient(to bottom right, #14213d, #0b1220);
+  background-image: linear-gradient(180deg, #0a1033 0%, #060818 58%, #04050f 100%);
+  box-shadow: 1px 0 0 rgba(99, 112, 255, 0.55), 10px 0 44px rgba(79, 70, 229, 0.20);
 }
 .dark .topbar-app {
-  background-image: linear-gradient(to right, #14213d, #0b1220);
+  background-image: linear-gradient(to right, #0a1033, #05060f);
+  box-shadow: 0 1px 0 rgba(99, 112, 255, 0.55), 0 6px 26px rgba(79, 70, 229, 0.25);
 }
 
-/* menu yang sedang aktif (kotak putih) jadi biru lembut */
+/* kartu logo tetap putih (supaya logo terbaca), diberi cahaya neon */
+.dark .sidebar-app .bg-white\/90 { box-shadow: 0 0 26px rgba(99, 102, 241, 0.55); }
+
+/* kotak Tahun Anggaran & tombol tema */
+.dark .sidebar-app .bg-white\/15.border {
+  background-color: rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 130, 255, 0.50);
+  box-shadow: 0 0 16px rgba(79, 70, 229, 0.30);
+}
+.dark .sidebar-app button.bg-white\/10 {
+  background-color: rgba(99, 102, 241, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(99, 130, 255, 0.35);
+}
+.dark .sidebar-app button.bg-white\/10:hover { background-color: rgba(99, 102, 241, 0.28); }
+
+/* menu: sorotan saat hover, dan menu aktif menyala */
+.dark .sidebar-app a:hover { background-color: rgba(99, 102, 241, 0.18); }
 .dark .sidebar-app a.bg-white {
-  background-color: rgba(59, 130, 246, 0.28);
-  color: #dbeafe;
-  box-shadow: none;
+  background-color: transparent;
+  background-image: linear-gradient(90deg, rgba(37, 99, 235, 0.38), rgba(124, 58, 237, 0.32));
+  color: #e0e7ff;
+  box-shadow: 0 0 0 1px rgba(110, 140, 255, 0.65), 0 0 20px rgba(79, 70, 229, 0.60);
 }
 
 /* kotak menu profil (Lengkapi Profil / Logout) */
 .dark .sidebar-app div.bg-white {
-  background-color: #172033;
-  border: 1px solid #2b3a52;
+  background-color: #0b1030;
+  border: 1px solid rgba(99, 112, 255, 0.50);
+  box-shadow: 0 0 18px rgba(79, 70, 229, 0.40);
 }
-.dark .sidebar-app .text-gray-700 { color: #cbd5e1; }
-.dark .sidebar-app .text-red-600 { color: #f87171; }
-.dark .sidebar-app .hover\:bg-gray-100:hover { background-color: #2b3a52; }
+.dark .sidebar-app .text-gray-700 { color: #cdd5ff; }
+.dark .sidebar-app .text-red-600 { color: #fb7185; }
+.dark .sidebar-app .hover\:bg-gray-100:hover { background-color: rgba(99, 102, 241, 0.22); }
+
+/* pop up sapaan setelah login ikut bercahaya */
+.dark .sapaan-masuk > div {
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.6), 0 0 32px rgba(99, 102, 241, 0.65);
+}

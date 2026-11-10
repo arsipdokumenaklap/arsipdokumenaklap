@@ -24,7 +24,7 @@ const JENIS_FILE = ["Semua", "PDF", "Word", "Excel", "PowerPoint"];
 
 function ArsipPage() {
 
-  const { documents, deleteDocument } = useContext(DocumentContext);
+  const { documents, pindahKeSampah } = useContext(DocumentContext);
   const [keyword, setKeyword] = useState("");
   const [filterSurat, setFilterSurat] = useState("Semua");
   const [filterFile, setFilterFile] = useState("Semua");
@@ -67,9 +67,9 @@ function ArsipPage() {
   }, [previewFile]);
 
   const handleHapus = async (doc) => {
-    if (!window.confirm(`Hapus dokumen "${doc.nama}" dari daftar arsip?`)) return;
+    if (!window.confirm(`Pindahkan dokumen "${doc.nama}" ke Sampah?\n\nDokumen masih bisa dipulihkan dari menu Sampah.`)) return;
     try {
-      await deleteDocument(doc.id);
+      await pindahKeSampah(doc.id);
     } catch (error) {
       alert("Gagal menghapus dokumen: " + error.message);
     }
@@ -277,14 +277,12 @@ function ArsipPage() {
                       Download
                     </a>
 
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleHapus(doc)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition"
-                      >
-                        Hapus
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleHapus(doc)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition"
+                    >
+                      Hapus
+                    </button>
 
                   </div>
                 </td>

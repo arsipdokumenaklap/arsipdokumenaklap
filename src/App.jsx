@@ -11,7 +11,7 @@ import {
   FaHome,
   FaUpload,
   FaFolderOpen,
-  FaChartBar,
+  FaTrashAlt,
   FaBars,
   FaCalendarAlt,
   FaMoon,
@@ -24,7 +24,7 @@ import { useState, useEffect, useRef, useContext } from "react";
 import Dashboard from "./pages/Dashboard";
 import UploadPage from "./pages/UploadPage";
 import ArsipPage from "./pages/ArsipPage";
-import LaporanPage from "./pages/LaporanPage";
+import SampahPage from "./pages/SampahPage";
 import ViewDocumentPage from "./pages/ViewDocumentPage";
 import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -32,6 +32,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import UploadPanel from "./components/UploadPanel";
 import { UploadProvider, UploadContext } from "./context/UploadContext";
 import { TahunContext } from "./context/TahunContext";
+import { DocumentContext } from "./context/DocumentContext";
 import { TemaContext, TemaProvider } from "./context/TemaContext";
 
 import logo from "./assets/logo.png";
@@ -77,6 +78,9 @@ function Layout() {
 
   // tahun anggaran yang sedang dipakai (dipilih saat login)
   const { tahun } = useContext(TahunContext);
+
+  // jumlah dokumen di Sampah, ditampilkan sebagai angka kecil di menu
+  const { sampah } = useContext(DocumentContext);
 
   // status upload di latar belakang, dipakai agar logout otomatis tidak memutus upload
   const { adaUploadBerjalan } = useContext(UploadContext);
@@ -385,9 +389,14 @@ function Layout() {
             Arsip
           </NavLink>
 
-          <NavLink to="/laporan" className={menuClass}>
-            <FaChartBar />
-            Laporan
+          <NavLink to="/sampah" className={menuClass}>
+            <FaTrashAlt />
+            Sampah
+            {sampah.length > 0 && (
+              <span className="ml-auto min-w-[1.5rem] text-center text-xs font-semibold bg-red-500 text-white rounded-full px-2 py-0.5">
+                {sampah.length}
+              </span>
+            )}
           </NavLink>
 
         </div>
@@ -511,10 +520,10 @@ function Layout() {
             />
 
             <Route
-              path="/laporan"
+              path="/sampah"
               element={
                 <ProtectedRoute>
-                  <LaporanPage />
+                  <SampahPage />
                 </ProtectedRoute>
               }
             />
