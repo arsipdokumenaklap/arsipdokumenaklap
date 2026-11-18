@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { auth, db } from "../firebase";
+import { KonfirmasiContext } from "../context/KonfirmasiContext";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import {
   onAuthStateChanged,
@@ -57,6 +58,7 @@ const kompresGambar = (file, ukuranMaks = 256, kualitas = 0.7) =>
   });
 
 function ProfilePage() {
+  const konfirmasi = useContext(KonfirmasiContext);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [menyimpan, setMenyimpan] = useState(false);
@@ -115,12 +117,12 @@ function ProfilePage() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("File harus berupa gambar (JPG, PNG, dsb)");
+      konfirmasi.info("File tidak sesuai", "File harus berupa gambar (JPG, PNG, dsb).", "peringatan");
       return;
     }
 
     if (file.size > MAKS_UKURAN_FOTO) {
-      alert("Ukuran foto maksimal 2 MB");
+      konfirmasi.info("Foto terlalu besar", "Ukuran foto maksimal 2 MB.", "peringatan");
       return;
     }
 
@@ -129,7 +131,7 @@ function ProfilePage() {
       setFotoBaru(hasil);
     } catch (error) {
       console.error(error);
-      alert("Gagal memproses foto, coba gambar lain");
+      konfirmasi.info("Gagal memproses foto", "Coba gunakan gambar lain.", "galat");
     }
   };
 
@@ -145,7 +147,7 @@ function ProfilePage() {
       bidang: form.bidang.trim(),
     };
     if (!dataBersih.nama || !dataBersih.nip || !dataBersih.jabatan) {
-      alert("Nama Lengkap, NIP, dan Jabatan wajib diisi.");
+      konfirmasi.info("Data belum lengkap", "Nama Lengkap, NIP, dan Jabatan wajib diisi.", "peringatan");
       return;
     }
 
@@ -161,9 +163,9 @@ function ProfilePage() {
 
       setFotoURL(fotoFinal);
       setFotoBaru("");
-      alert("Profil berhasil disimpan");
+      konfirmasi.info("Profil tersimpan", "Profil Anda berhasil disimpan.", "sukses");
     } catch (error) {
-      alert("Gagal menyimpan profil: " + error.message);
+      konfirmasi.info("Gagal menyimpan profil", error.message, "galat");
     } finally {
       setMenyimpan(false);
     }
@@ -181,12 +183,12 @@ function ProfilePage() {
     if (!user) return;
 
     if (passwordBaru.length < 6) {
-      alert("Password baru minimal 6 karakter");
+      konfirmasi.info("Password terlalu pendek", "Password baru minimal 6 karakter.", "peringatan");
       return;
     }
 
     if (passwordBaru !== konfirmasiPassword) {
-      alert("Konfirmasi password baru tidak cocok");
+      konfirmasi.info("Password tidak cocok", "Konfirmasi password baru tidak sama dengan password baru.", "peringatan");
       return;
     }
 
@@ -196,15 +198,15 @@ function ProfilePage() {
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, passwordBaru);
 
-      alert("Password berhasil diubah");
+      konfirmasi.info("Password diubah", "Password Anda berhasil diubah.", "sukses");
       setPasswordSaatIni("");
       setPasswordBaru("");
       setKonfirmasiPassword("");
     } catch (error) {
       if (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
-        alert("Password saat ini yang kamu masukkan salah");
+        konfirmasi.info("Password salah", "Password saat ini yang Anda masukkan salah.", "galat");
       } else {
-        alert("Gagal mengubah password: " + error.message);
+        konfirmasi.info("Gagal mengubah password", error.message, "galat");
       }
     } finally {
       setGantiPasswordLoading(false);

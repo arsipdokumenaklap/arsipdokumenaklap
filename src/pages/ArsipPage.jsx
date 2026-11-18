@@ -2,6 +2,7 @@ import { useContext, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { DocumentContext } from "../context/DocumentContext";
+import { KonfirmasiContext } from "../context/KonfirmasiContext";
 import { FaFileAlt, FaChevronDown, FaSearch } from "react-icons/fa";
 
 const ADMIN_UID = "By09HK5iw3dS8yBZ1OmMotw1TJC3";
@@ -25,6 +26,7 @@ const JENIS_FILE = ["Semua", "PDF", "Word", "Excel", "PowerPoint"];
 function ArsipPage() {
 
   const { documents, pindahKeSampah } = useContext(DocumentContext);
+  const konfirmasi = useContext(KonfirmasiContext);
   const [keyword, setKeyword] = useState("");
   const [filterSurat, setFilterSurat] = useState("Semua");
   const [filterFile, setFilterFile] = useState("Semua");
@@ -67,11 +69,19 @@ function ArsipPage() {
   }, [previewFile]);
 
   const handleHapus = async (doc) => {
-    if (!window.confirm(`Pindahkan dokumen "${doc.nama}" ke Sampah?\n\nDokumen masih bisa dipulihkan dari menu Sampah.`)) return;
+    const ya = await konfirmasi({
+      tipe: "sampah",
+      judul: "Pindahkan ke Sampah?",
+      pesan: "Dokumen ini akan dipindahkan ke Sampah.",
+      detail: doc.nama,
+      catatan: "Dokumen masih bisa dipulihkan dari menu Sampah.",
+      tombolYa: "Ya, Pindahkan",
+    });
+    if (!ya) return;
     try {
       await pindahKeSampah(doc.id);
     } catch (error) {
-      alert("Gagal menghapus dokumen: " + error.message);
+      konfirmasi.info("Gagal menghapus dokumen", error.message, "galat");
     }
   };
 

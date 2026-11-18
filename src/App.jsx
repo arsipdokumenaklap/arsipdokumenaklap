@@ -34,6 +34,7 @@ import { UploadProvider, UploadContext } from "./context/UploadContext";
 import { TahunContext } from "./context/TahunContext";
 import { DocumentContext } from "./context/DocumentContext";
 import { TemaContext, TemaProvider } from "./context/TemaContext";
+import { KonfirmasiContext, KonfirmasiProvider } from "./context/KonfirmasiContext";
 
 import logo from "./assets/logo.png";
 
@@ -81,6 +82,7 @@ function Layout() {
 
   // jumlah dokumen di Sampah, ditampilkan sebagai angka kecil di menu
   const { sampah } = useContext(DocumentContext);
+  const konfirmasi = useContext(KonfirmasiContext);
 
   // status upload di latar belakang, dipakai agar logout otomatis tidak memutus upload
   const { adaUploadBerjalan } = useContext(UploadContext);
@@ -247,8 +249,10 @@ function Layout() {
         hapusPenandaSapaan();
         setSapaan(null);
         navigate("/");
-        alert(
-          `Anda otomatis keluar karena tidak ada aktivitas selama ${BATAS_DIAM_MENIT} menit. Silakan login kembali.`
+        konfirmasi.info(
+          "Anda otomatis keluar",
+          `Tidak ada aktivitas selama ${BATAS_DIAM_MENIT} menit. Silakan login kembali.`,
+          "info"
         );
       }
     };
@@ -266,7 +270,7 @@ function Layout() {
       document.removeEventListener("visibilitychange", saatTabKembali);
       daftarEvent.forEach((e) => window.removeEventListener(e, catatAktivitas));
     };
-  }, [navigate]);
+  }, [navigate, konfirmasi]);
 
   const handleLogout = async () => {
     try {
@@ -614,9 +618,11 @@ function App() {
   return (
     <HashRouter>
       <TemaProvider>
-        <UploadProvider>
-          <Layout />
-        </UploadProvider>
+        <KonfirmasiProvider>
+          <UploadProvider>
+            <Layout />
+          </UploadProvider>
+        </KonfirmasiProvider>
       </TemaProvider>
     </HashRouter>
   );

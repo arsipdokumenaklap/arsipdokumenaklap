@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { DocumentContext } from "../context/DocumentContext";
+import { KonfirmasiContext } from "../context/KonfirmasiContext";
 import { FaTrashAlt, FaSearch, FaUndo } from "react-icons/fa";
 
 const ADMIN_UID = "By09HK5iw3dS8yBZ1OmMotw1TJC3";
@@ -19,6 +20,7 @@ function formatWaktu(ts) {
 
 function SampahPage() {
   const { sampah, pulihkan, hapusPermanen } = useContext(DocumentContext);
+  const konfirmasi = useContext(KonfirmasiContext);
   const [keyword, setKeyword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [sibuk, setSibuk] = useState(false);
@@ -39,38 +41,41 @@ function SampahPage() {
     try {
       await pulihkan(doc.id);
     } catch (error) {
-      alert("Gagal memulihkan dokumen: " + error.message);
+      konfirmasi.info("Gagal memulihkan dokumen", error.message, "galat");
     }
   };
 
   const handleHapusPermanen = async (doc) => {
-    if (
-      !window.confirm(
-        `Hapus permanen "${doc.nama}"?\n\nDokumen hilang dari daftar dan TIDAK bisa dipulihkan lagi.`
-      )
-    )
-      return;
+    const ya = await konfirmasi({
+      tipe: "bahaya",
+      judul: "Hapus permanen?",
+      pesan: "Dokumen akan dihapus selamanya dan tidak bisa dipulihkan lagi.",
+      detail: doc.nama,
+      tombolYa: "Ya, Hapus Permanen",
+    });
+    if (!ya) return;
     try {
       await hapusPermanen(doc.id);
     } catch (error) {
-      alert("Gagal menghapus dokumen: " + error.message);
+      konfirmasi.info("Gagal menghapus dokumen", error.message, "galat");
     }
   };
 
   const handleKosongkan = async () => {
     if (sampah.length === 0) return;
-    if (
-      !window.confirm(
-        `Kosongkan Sampah?\n\n${sampah.length} dokumen akan dihapus permanen dan TIDAK bisa dipulihkan lagi.`
-      )
-    )
-      return;
+    const ya = await konfirmasi({
+      tipe: "bahaya",
+      judul: "Kosongkan Sampah?",
+      pesan: `${sampah.length} dokumen akan dihapus permanen dan tidak bisa dipulihkan lagi.`,
+      tombolYa: "Ya, Kosongkan",
+    });
+    if (!ya) return;
 
     setSibuk(true);
     try {
       await Promise.all(sampah.map((d) => hapusPermanen(d.id)));
     } catch (error) {
-      alert("Sebagian dokumen gagal dihapus: " + error.message);
+      konfirmasi.info("Sebagian dokumen gagal dihapus", error.message, "galat");
     } finally {
       setSibuk(false);
     }

@@ -11,6 +11,7 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { DocumentContext } from "../context/DocumentContext";
+import { KonfirmasiContext } from "../context/KonfirmasiContext";
 import { UploadContext } from "../context/UploadContext";
 
 const JENIS_SURAT = [
@@ -74,6 +75,7 @@ function SelectField({ icon: Icon, iconClass = "text-blue-400", children, ...pro
 function UploadPage() {
   const { documents } = useContext(DocumentContext);
   const { mulaiUpload } = useContext(UploadContext);
+  const konfirmasi = useContext(KonfirmasiContext);
   const inputFileRef = useRef(null);
   // true kalau nama surat sudah diketik/diedit sendiri, jadi tidak ditimpa nama file
   const namaManualRef = useRef(false);
@@ -115,7 +117,7 @@ function UploadPage() {
 
     const pesanError = cekFile(file);
     if (pesanError) {
-      alert(pesanError);
+      konfirmasi.info("File tidak bisa dipakai", pesanError, "peringatan");
       kosongkanInputFile();
       return;
     }
@@ -140,13 +142,17 @@ function UploadPage() {
   };
 
   const handleUpload = () => {
-    if (!namaSurat.trim()) return alert("Masukkan nama surat terlebih dahulu");
-    if (!jenisSurat) return alert("Pilih jenis surat terlebih dahulu");
-    if (!jenisFile) return alert("Pilih jenis file terlebih dahulu");
-    if (!selectedFile) return alert("Pilih file terlebih dahulu");
+    if (!namaSurat.trim())
+      return konfirmasi.info("Nama surat belum diisi", "Masukkan nama surat terlebih dahulu.", "peringatan");
+    if (!jenisSurat)
+      return konfirmasi.info("Jenis surat belum dipilih", "Pilih jenis surat terlebih dahulu.", "peringatan");
+    if (!jenisFile)
+      return konfirmasi.info("Jenis file belum dipilih", "Pilih jenis file terlebih dahulu.", "peringatan");
+    if (!selectedFile)
+      return konfirmasi.info("File belum dipilih", "Pilih file terlebih dahulu.", "peringatan");
 
     const pesanError = cekFile(selectedFile);
-    if (pesanError) return alert(pesanError);
+    if (pesanError) return konfirmasi.info("File tidak bisa dipakai", pesanError, "peringatan");
 
     // upload berjalan di latar belakang (lihat panel di pojok kanan bawah)
     mulaiUpload({

@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import { TahunContext } from "../context/TahunContext";
 import { TemaContext } from "../context/TemaContext";
+import { KonfirmasiContext } from "../context/KonfirmasiContext";
 
 // taruh file logo di src/assets/logo.png lalu import seperti ini,
 // supaya alamatnya otomatis benar walau situs dipindah ke subfolder
@@ -101,19 +102,24 @@ function LoginPage() {
   const { tahun, setTahun, daftarTahun } = useContext(TahunContext);
   // mode gelap/terang yang sama dengan dashboard (satu pengaturan bersama)
   const { gelap, toggleTema } = useContext(TemaContext);
+  const konfirmasi = useContext(KonfirmasiContext);
   const navigate = useNavigate();
 
   const handleLupaPassword = async () => {
     if (!email) {
-      alert("Isi kolom Email dulu, lalu klik \"Lupa password?\" lagi.");
+      konfirmasi.info("Email belum diisi", 'Isi kolom Email dulu, lalu klik "Lupa password?" lagi.', "peringatan");
       return;
     }
 
     try {
       await sendPasswordResetEmail(auth, email);
-      alert("Link reset password sudah dikirim ke " + email + ". Silakan cek email (termasuk folder spam).");
+      konfirmasi.info(
+        "Link reset terkirim",
+        "Link reset password sudah dikirim ke " + email + ". Silakan cek email (termasuk folder spam).",
+        "sukses"
+      );
     } catch (error) {
-      alert("Gagal mengirim email reset: " + error.message);
+      konfirmasi.info("Gagal mengirim email reset", error.message, "galat");
     }
   };
 
@@ -125,7 +131,17 @@ function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       navigate("/dashboard");
     } catch (error) {
-      alert("Login gagal: " + error.message);
+      // pesan Firebase yang panjang diganti kalimat singkat yang mudah dipahami
+      const kode = error?.code || "";
+      let pesan = error?.message || "Terjadi kesalahan.";
+      if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-email"].includes(kode)) {
+        pesan = "Email atau password salah. Silakan periksa lalu coba lagi.";
+      } else if (kode === "auth/too-many-requests") {
+        pesan = "Terlalu banyak percobaan login. Tunggu beberapa saat lalu coba lagi.";
+      } else if (kode === "auth/network-request-failed") {
+        pesan = "Koneksi internet bermasalah. Periksa jaringan Anda lalu coba lagi.";
+      }
+      konfirmasi.info("Login gagal", pesan, "galat");
     } finally {
       setLoading(false);
     }
