@@ -3,8 +3,15 @@ import { createContext, useState } from "react";
 const KUNCI_PENYIMPANAN = "tahunAnggaran";
 const TAHUN_INI = new Date().getFullYear();
 
-// tahun yang bisa dipilih saat login: tahun depan sampai 4 tahun ke belakang
-const DAFTAR_TAHUN = Array.from({ length: 6 }, (_, i) => TAHUN_INI + 1 - i);
+// tahun paling awal yang ada di arsip (ubah angka ini sesuai kebutuhan).
+// Tahun baru otomatis muncul setiap Januari, dan tahun lama tidak akan hilang dari daftar.
+const TAHUN_AWAL = 2010;
+
+// tahun yang bisa dipilih saat login: dari tahun depan sampai TAHUN_AWAL
+const DAFTAR_TAHUN = Array.from(
+  { length: TAHUN_INI + 1 - TAHUN_AWAL + 1 },
+  (_, i) => TAHUN_INI + 1 - i
+);
 
 export const TahunContext = createContext(null);
 
