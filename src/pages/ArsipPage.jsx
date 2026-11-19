@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { DocumentContext } from "../context/DocumentContext";
 import { KonfirmasiContext } from "../context/KonfirmasiContext";
-import { FaFileAlt, FaChevronDown, FaSearch } from "react-icons/fa";
+import { FaFileAlt, FaChevronDown, FaSearch, FaCalendarAlt } from "react-icons/fa";
 
 const ADMIN_UID = "By09HK5iw3dS8yBZ1OmMotw1TJC3";
 
@@ -21,6 +21,20 @@ const JENIS_SURAT = [
   "Dokumen Lainnya"
 ];
 
+const NAMA_BULAN = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+];
+
+// bulan upload (0-11): utamanya dari createdAt (Firestore), cadangan dari teks "dd/mm/yyyy"
+function ambilBulan(doc) {
+  const ts = doc.createdAt;
+  if (ts?.toDate) return ts.toDate().getMonth();
+  if (ts instanceof Date) return ts.getMonth();
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(doc.tanggal || "");
+  return m ? Number(m[2]) - 1 : null;
+}
+
 const JENIS_FILE = ["Semua", "PDF", "Word", "Excel", "PowerPoint"];
 
 function ArsipPage() {
@@ -30,6 +44,7 @@ function ArsipPage() {
   const [keyword, setKeyword] = useState("");
   const [filterSurat, setFilterSurat] = useState("Semua");
   const [filterFile, setFilterFile] = useState("Semua");
+  const [filterBulan, setFilterBulan] = useState("Semua");
   const [previewFile, setPreviewFile] = useState(null);
   // dipakai untuk memuat ulang iframe preview (otomatis sekali, atau lewat tombol)
   const [muatUlangKe, setMuatUlangKe] = useState(0);
@@ -89,7 +104,8 @@ function ArsipPage() {
     const cocokNama = (doc.nama || "").toLowerCase().includes(keyword.toLowerCase());
     const cocokSurat = filterSurat === "Semua" || doc.kategori === filterSurat;
     const cocokFile = filterFile === "Semua" || doc.tipeFile === filterFile;
-    return cocokNama && cocokSurat && cocokFile;
+    const cocokBulan = filterBulan === "Semua" || ambilBulan(doc) === Number(filterBulan);
+    return cocokNama && cocokSurat && cocokFile && cocokBulan;
   });
 
   // Google Drive bisa menampilkan pratinjau PDF, Word, maupun Excel
@@ -137,7 +153,7 @@ function ArsipPage() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-wrap">
 
           <div className="flex-1">
             <label className="block text-sm font-medium mb-2">
@@ -179,6 +195,31 @@ function ArsipPage() {
                 {JENIS_FILE.map((jenis) => (
                   <option key={jenis} value={jenis}>
                     {jenis}
+                  </option>
+                ))}
+              </select>
+
+              <FaChevronDown className="text-gray-400 text-sm shrink-0 pointer-events-none" />
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-2">
+              Filter Bulan
+            </label>
+
+            <div className="relative flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-lg px-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition">
+              <FaCalendarAlt className="text-blue-400 shrink-0" />
+
+              <select
+                value={filterBulan}
+                onChange={(e) => setFilterBulan(e.target.value)}
+                className="w-full bg-transparent p-3 outline-none appearance-none cursor-pointer"
+              >
+                <option value="Semua">Semua bulan</option>
+                {NAMA_BULAN.map((nama, i) => (
+                  <option key={nama} value={i}>
+                    {nama}
                   </option>
                 ))}
               </select>

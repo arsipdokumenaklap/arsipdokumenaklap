@@ -13,7 +13,6 @@ import {
   FaFolderOpen,
   FaTrashAlt,
   FaBars,
-  FaCalendarAlt,
   FaMoon,
   FaSun,
   FaTimes,
@@ -30,8 +29,8 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UploadPanel from "./components/UploadPanel";
+import PilihTahun from "./components/PilihTahun";
 import { UploadProvider, UploadContext } from "./context/UploadContext";
-import { TahunContext } from "./context/TahunContext";
 import { DocumentContext } from "./context/DocumentContext";
 import { TemaContext, TemaProvider } from "./context/TemaContext";
 import { KonfirmasiContext, KonfirmasiProvider } from "./context/KonfirmasiContext";
@@ -76,9 +75,6 @@ function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const profileRef = useRef(null);
-
-  // tahun anggaran yang sedang dipakai (dipilih saat login)
-  const { tahun } = useContext(TahunContext);
 
   // jumlah dokumen di Sampah, ditampilkan sebagai angka kecil di menu
   const { sampah } = useContext(DocumentContext);
@@ -319,9 +315,9 @@ function Layout() {
           Arsip Dokumen
         </span>
 
-        <span className="ml-auto text-sm text-blue-50 font-medium">
-          TA {tahun}
-        </span>
+        <div className="ml-auto">
+          <PilihTahun varian="topbar" />
+        </div>
 
         <button
           onClick={toggleTema}
@@ -361,19 +357,9 @@ function Layout() {
           />
         </div>
 
-        {/* Tahun anggaran sesuai pilihan saat login (hanya tampilan, tidak bisa diganti) */}
-        <div className="mb-6 flex items-center gap-3 bg-white/15 border border-white/25 rounded-lg px-3 py-2.5">
-          <FaCalendarAlt className="text-white shrink-0" />
-
-          <div className="leading-tight">
-            <p className="text-xs text-blue-100">
-              Tahun Anggaran
-            </p>
-
-            <p className="font-bold text-lg">
-              {tahun}
-            </p>
-          </div>
+        {/* Tahun anggaran: bisa diganti kapan saja tanpa login ulang */}
+        <div className="mb-6">
+          <PilihTahun varian="sidebar" />
         </div>
 
         <div className="space-y-4 flex-1">

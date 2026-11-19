@@ -1,4 +1,4 @@
-import { useState, useContext, useRef, useEffect } from "react";
+import { useState, useContext } from "react";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
@@ -7,13 +7,9 @@ import {
   FaLock,
   FaEye,
   FaEyeSlash,
-  FaCalendarAlt,
-  FaChevronDown,
-  FaCheck,
   FaMoon,
   FaSun,
 } from "react-icons/fa";
-import { TahunContext } from "../context/TahunContext";
 import { TemaContext } from "../context/TemaContext";
 import { KonfirmasiContext } from "../context/KonfirmasiContext";
 
@@ -95,153 +91,11 @@ function Awan({ className = "", lebar = 11, lambat = false, hanyut = 40, detik =
   );
 }
 
-// Pilihan tahun buatan sendiri: hanya 5 baris yang tampak, sisanya digulir.
-// (dropdown bawaan browser tidak bisa dibatasi tingginya)
-const TINGGI_BARIS = 40; // px, harus sama dengan .lp-tahun-item
-const BARIS_TERLIHAT = 5;
-
-function PilihTahun({ nilai, onPilih, daftar }) {
-  const [buka, setBuka] = useState(false);
-  const [keAtas, setKeAtas] = useState(false);
-  const [aktif, setAktif] = useState(0);
-  const wadah = useRef(null);
-  const daftarRef = useRef(null);
-
-  const indeksTerpilih = Math.max(0, daftar.findIndex((t) => Number(t) === Number(nilai)));
-
-  const bukaDaftar = () => {
-    // kalau ruang di bawah tidak cukup, daftar dibuka ke atas
-    const kotak = wadah.current?.getBoundingClientRect();
-    const butuh = TINGGI_BARIS * BARIS_TERLIHAT + 24;
-    setKeAtas(Boolean(kotak) && kotak.bottom + butuh > window.innerHeight && kotak.top > butuh);
-    setAktif(indeksTerpilih);
-    setBuka(true);
-  };
-
-  const tutupDaftar = () => setBuka(false);
-
-  const pilih = (t) => {
-    onPilih(t);
-    tutupDaftar();
-  };
-
-  // tahun terpilih diletakkan di tengah daftar saat dibuka
-  useEffect(() => {
-    if (!buka || !daftarRef.current) return;
-    daftarRef.current.scrollTop = Math.max(
-      0,
-      indeksTerpilih * TINGGI_BARIS - TINGGI_BARIS * 2
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buka]);
-
-  // baris yang disorot lewat keyboard selalu terlihat
-  useEffect(() => {
-    if (!buka) return;
-    daftarRef.current?.children[aktif]?.scrollIntoView({ block: "nearest" });
-  }, [aktif, buka]);
-
-  // klik di luar menutup daftar
-  useEffect(() => {
-    if (!buka) return;
-    const saatKlik = (e) => {
-      if (wadah.current && !wadah.current.contains(e.target)) tutupDaftar();
-    };
-    document.addEventListener("mousedown", saatKlik);
-    return () => document.removeEventListener("mousedown", saatKlik);
-  }, [buka]);
-
-  const saatTombol = (e) => {
-    if (!buka) {
-      if (["ArrowDown", "ArrowUp", "Enter", " "].includes(e.key)) {
-        e.preventDefault();
-        bukaDaftar();
-      }
-      return;
-    }
-
-    if (e.key === "Escape") {
-      e.preventDefault();
-      tutupDaftar();
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setAktif((i) => Math.min(daftar.length - 1, i + 1));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setAktif((i) => Math.max(0, i - 1));
-    } else if (e.key === "Home") {
-      e.preventDefault();
-      setAktif(0);
-    } else if (e.key === "End") {
-      e.preventDefault();
-      setAktif(daftar.length - 1);
-    } else if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      pilih(daftar[aktif]);
-    } else if (e.key === "Tab") {
-      tutupDaftar();
-    }
-  };
-
-  return (
-    <div ref={wadah} className="relative">
-      <button
-        type="button"
-        onClick={() => (buka ? tutupDaftar() : bukaDaftar())}
-        onKeyDown={saatTombol}
-        aria-haspopup="listbox"
-        aria-expanded={buka}
-        className="lp-field w-full flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-lg px-3 focus:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition text-left cursor-pointer"
-      >
-        <FaCalendarAlt className="text-blue-400 shrink-0" />
-        <span className="flex-1 p-3">{nilai}</span>
-        <FaChevronDown
-          className={`text-gray-400 text-sm shrink-0 transition-transform duration-200 ${
-            buka ? "rotate-180" : ""
-          }`}
-        />
-      </button>
-
-      {buka && (
-        <ul
-          ref={daftarRef}
-          role="listbox"
-          aria-label="Tahun Anggaran"
-          className={`lp-tahun-daftar absolute z-40 left-0 right-0 ${
-            keAtas ? "bottom-full mb-2 lp-tahun-atas" : "top-full mt-2"
-          }`}
-          style={{ maxHeight: TINGGI_BARIS * BARIS_TERLIHAT }}
-        >
-          {daftar.map((t, i) => {
-            const terpilih = Number(t) === Number(nilai);
-            return (
-              <li
-                key={t}
-                role="option"
-                aria-selected={terpilih}
-                onMouseEnter={() => setAktif(i)}
-                onClick={() => pilih(t)}
-                className={`lp-tahun-item ${terpilih ? "terpilih" : ""} ${
-                  i === aktif ? "aktif" : ""
-                }`}
-              >
-                <span>{t}</span>
-                {terpilih && <FaCheck className="text-xs" />}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { tahun, setTahun, daftarTahun } = useContext(TahunContext);
   // mode gelap/terang yang sama dengan dashboard (satu pengaturan bersama)
   const { gelap, toggleTema } = useContext(TemaContext);
   const konfirmasi = useContext(KonfirmasiContext);
@@ -530,52 +384,6 @@ function LoginPage() {
         /* kartu logo tetap putih, diberi cahaya neon */
         .dark .lp-logo-kartu { box-shadow: 0 0 44px rgba(99, 102, 241, 0.6); }
 
-        /* ===== pilihan tahun: 5 baris terlihat, sisanya digulir ===== */
-        @keyframes lp-daftar-masuk {
-          from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .lp-tahun-daftar {
-          margin: 0;
-          padding: 4px;
-          list-style: none;
-          overflow-y: auto;
-          background: #ffffff;
-          border: 1px solid #dbeafe;
-          border-radius: 0.6rem;
-          box-shadow: 0 14px 34px rgba(30, 64, 175, 0.22);
-          animation: lp-daftar-masuk 0.16s ease-out;
-          scrollbar-width: thin;
-          scrollbar-color: #93c5fd transparent;
-        }
-        .lp-tahun-atas { animation-name: none; }
-        .lp-tahun-item {
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 0.8rem;
-          border-radius: 0.45rem;
-          cursor: pointer;
-          color: #1e293b;
-          transition: background-color 0.12s ease;
-        }
-        .lp-tahun-item.aktif { background: #eff6ff; }
-        .lp-tahun-item.terpilih { color: #1d4ed8; font-weight: 600; }
-        .dark .lp-tahun-daftar {
-          background: #0b1030;
-          border-color: rgba(99, 112, 255, 0.6);
-          box-shadow: 0 0 0 1px rgba(99, 112, 255, 0.25), 0 0 26px rgba(79, 70, 229, 0.45);
-          scrollbar-color: #6366f1 transparent;
-        }
-        .dark .lp-tahun-item { color: #cdd5ff; }
-        .dark .lp-tahun-item.aktif { background: rgba(99, 102, 241, 0.2); }
-        .dark .lp-tahun-item.terpilih {
-          color: #67e8f9;
-          background: linear-gradient(90deg, rgba(37, 99, 235, 0.3), rgba(124, 58, 237, 0.25));
-          box-shadow: inset 0 0 0 1px rgba(110, 140, 255, 0.5);
-        }
-
         /* tombol mode gelap/terang */
         .lp-tema-btn { background: #ffffff; color: #1e3a8a; border: 1px solid #dbeafe; }
         .lp-tema-ikon { background: #eff6ff; color: #2563eb; }
@@ -778,7 +586,7 @@ function LoginPage() {
               </div>
             </div>
 
-            <div className="text-right mb-4">
+            <div className="text-right mb-6">
               <button
                 type="button"
                 onClick={handleLupaPassword}
@@ -786,14 +594,6 @@ function LoginPage() {
               >
                 Lupa password?
               </button>
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm mb-2 font-medium">
-                Tahun Anggaran
-              </label>
-
-              <PilihTahun nilai={tahun} onPilih={setTahun} daftar={daftarTahun} />
             </div>
 
             <button

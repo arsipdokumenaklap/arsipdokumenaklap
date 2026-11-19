@@ -13,6 +13,7 @@ import {
 import { DocumentContext } from "../context/DocumentContext";
 import { KonfirmasiContext } from "../context/KonfirmasiContext";
 import { UploadContext } from "../context/UploadContext";
+import { TahunContext } from "../context/TahunContext";
 
 const JENIS_SURAT = [
   "Surat Masuk",
@@ -72,10 +73,25 @@ function SelectField({ icon: Icon, iconClass = "text-blue-400", children, ...pro
   );
 }
 
+// ubin SVG berisi tulisan "TA <tahun>" miring; diulang memenuhi kotak sebagai watermark
+function watermarkTahun(tahun, rgb, opasitas) {
+  const teks = (x, y) =>
+    `<text x='${x}' y='${y}' transform='rotate(-25 ${x} ${y})' text-anchor='middle' ` +
+    `font-family='Arial,Helvetica,sans-serif' font-size='19' font-weight='700' ` +
+    `fill='rgba(${rgb},${opasitas})'>TA ${tahun}</text>`;
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='190' height='120'>` +
+    teks(50, 38) + teks(145, 98) +
+    `</svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
 function UploadPage() {
   const { documents } = useContext(DocumentContext);
   const { mulaiUpload } = useContext(UploadContext);
   const konfirmasi = useContext(KonfirmasiContext);
+  // tahun anggaran aktif, ditampilkan sebagai watermark di kotak upload
+  const { tahun } = useContext(TahunContext);
   const inputFileRef = useRef(null);
   // true kalau nama surat sudah diketik/diedit sendiri, jadi tidak ditimpa nama file
   const namaManualRef = useRef(false);
@@ -254,9 +270,24 @@ function UploadPage() {
                   iconClass={warnaIkonJenisFile}
                   value={jenisFile}
                   onChange={(e) => {
+                    const baru = JENIS_FILE.find((j) => j.label === e.target.value);
                     setJenisFile(e.target.value);
-                    setSelectedFile(null);
-                    kosongkanInputFile();
+
+                    // file yang sudah dipilih tetap dipakai kalau formatnya cocok dengan jenis baru
+                    if (selectedFile && baru) {
+                      const cocok = baru.accept
+                        .split(",")
+                        .some((ext) => selectedFile.name.toLowerCase().endsWith(ext.trim().toLowerCase()));
+                      if (!cocok) {
+                        konfirmasi.info(
+                          "File dilepas",
+                          `File "${selectedFile.name}" bukan format ${baru.label}, jadi pilihannya dikosongkan. Pilih file ${baru.accept} atau ganti jenis file.`,
+                          "peringatan"
+                        );
+                        setSelectedFile(null);
+                        kosongkanInputFile();
+                      }
+                    }
                   }}
                 >
                   <option value="" disabled>
@@ -278,12 +309,24 @@ function UploadPage() {
             onDragOver={handleDragOver}
             onDragLeave={() => setSedangDrag(false)}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-2xl px-6 py-12 text-center transition-all duration-200 ${
+            className={`relative isolate overflow-hidden border-2 border-dashed rounded-2xl px-6 py-12 text-center transition-all duration-200 ${
               sedangDrag
                 ? "border-blue-600 bg-blue-50 scale-[1.01]"
                 : "border-blue-300 bg-white"
             }`}
           >
+
+            {/* watermark tahun anggaran: tulisan kecil berulang miring seperti watermark foto stok.
+                Ada di belakang isi kotak dan tidak bisa diklik */}
+            <style>{`
+              .wm-tahun { background-image: var(--wm-terang); background-size: 190px 120px; }
+              .dark .wm-tahun { background-image: var(--wm-gelap); }
+            `}</style>
+            <div
+              aria-hidden="true"
+              className="wm-tahun absolute inset-0 -z-10 pointer-events-none select-none"
+              style={{ "--wm-terang": watermarkTahun(tahun, "37,99,235", 0.2), "--wm-gelap": watermarkTahun(tahun, "165,180,252", 0.22) }}
+            />
 
             <FaCloudUploadAlt
               size={64}
